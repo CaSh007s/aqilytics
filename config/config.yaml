@@ -1,0 +1,41 @@
+# AQILytics Configuration
+# Add new cities, features, models here — no code change needed!
+
+project:
+  name: "AQILytics"
+  version: "0.1.0"
+
+cities:
+  - name: "Delhi"
+    lat: 28.6139
+    lon: 77.2090
+    waqi_token: "Delhi"  # Will be replaced by .env
+
+  # Uncomment to add more
+  # - name: "Mumbai"
+  #   lat: 19.0760
+  #   lon: 72.8777
+  #   waqi_token: "@MUMBAI"
+
+apis:
+  waqi_base: "https://api.waqi.info/feed"
+  weather_base: "https://api.openweathermap.org/data/2.5"
+  weather_key: "@WEATHER_KEY"
+
+features:
+  target: "aqi"
+  pollutants: ["pm25", "pm10", "no2", "co", "o3"]
+  weather: ["temp", "humidity", "wind_speed", "pressure", "rain_1h"]
+  temporal: ["hour", "day", "month", "is_weekend"]
+  lags: [1, 3, 6, 24]
+  rolling: [3, 6, 24]
+
+model:
+  name: "xgboost_aqi"
+  horizons: [1, 6, 24]  # hours ahead
+  quantile: [0.1, 0.9]  # for confidence bands
+
+paths:
+  raw_data: "data/raw"
+  processed_data: "data/processed"
+  models: "data/models"
