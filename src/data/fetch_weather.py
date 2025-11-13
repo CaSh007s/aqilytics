@@ -1,102 +1,83 @@
 """
-Fetch weather from OpenWeatherMap (free tier: current + forecast).
-Mock historical for training.
-Extensible: Add paid historical later.
+Fetch weather for any city.
 """
-import os
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-import yaml
+import os
 import logging
+from datetime import datetime, timedelta
+import sys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from dotenv import load_dotenv
 load_dotenv()
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+if not OPENWEATHER_API_KEY:
+    raise ValueError("OPENWEATHER_API_KEY not found in .env")
 
-def load_config():
-    with open("config/config.yaml", "r") as f:
-        return yaml.safe_load(f)
+# City → (lat, lon)
+CITY_COORDS = {
+    "delhi": (28.6139, 77.2090),
+    "mumbai": (19.0760, 72.8777),
+    "bangalore": (12.9716, 77.5946),
+    "kolkata": (22.5726, 88.3639),
+    "bhopal": (23.2599, 77.4126)
+}
 
-def fetch_current_weather(city_config):
-    """Fetch current weather (free tier)."""
-    api_key = os.getenv("WEATHER_API_KEY")
-    if not api_key:
-        raise ValueError("Missing WEATHER_API_KEY in .env")
-    
-    base_url = city_config.get("apis", {}).get("weather_base", "https://api.openweathermap.org/data/2.5")
-    url = f"{base_url}/weather"
-    
-    params = {
-        "lat": city_config["lat"],
-        "lon": city_config["lon"],
-        "appid": api_key,
-        "units": "metric"  # Celsius
-    }
-    
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    
+def fetch_current_weather(city):
+    print(f"Fetching current weather for {city}...")
+    lat, lon = CITY_COORDS[city]
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+    response = requests.get(url)
+    if response.status_code != 200:
+        print(f"Error: {response.text}")
+        return pd.DataFrame()
     data = response.json()
-    current_time = datetime.fromtimestamp(data["dt"])
-    
-    result = {
-        "timestamp": current_time.isoformat(),
-        "city": city_config["name"],
-        "temp": data["main"]["temp"],
-        "humidity": data["main"]["humidity"],
-        "wind_speed": data["wind"]["speed"],
-        "pressure": data["main"]["pressure"],
-        "rain_1h": data.get("rain", {}).get("1h", 0),
-        "lat": city_config["lat"],
-        "lon": city_config["lon"]
+    record = {
+        'city': city,
+        'timestamp': datetime.fromtimestamp(data['dt']).strftime("%Y-%m-%d %H:%M:%S"),
+        'temp': data['main']['temp'],
+        'humidity': data['main']['humidity'],
+        'pressure': data['main']['pressure'],
+        'wind_speed': data['wind']['speed'],
+        'rain_1h': data.get('rain', {}).get('1h', 0)
     }
-    logger.info(f"Fetched current weather for {city_config['name']}: {result['temp']}°C, {result['humidity']}% humidity")
-    return result
-
-def fetch_historical_weather(city_config, days_back=7):
-    """
-    Free tier: No historical. Mock realistic Delhi weather from current.
-    For real history: Upgrade to One Call API 3.0 (paid).
-    """
-    logger.warning("OpenWeather free tier has no historical API. Using current + mock for training.")
-    current = fetch_current_weather(city_config)
-    historical = []
-    base_time = datetime.fromisoformat(current["timestamp"].replace("Z", "+00:00"))
-    
-    for i in range(days_back):
-        mock_time = base_time - timedelta(days=i)
-        mock_entry = current.copy()
-        mock_entry["timestamp"] = mock_time.isoformat()
-        
-        # Mock realistic Delhi variation: cooler nights, seasonal AQI boost
-        hour = mock_time.hour
-        mock_entry["temp"] = max(15, current["temp"] + (hour - 12) * 0.5 + (i % 3 - 1) * 2)  # Daily/seasonal swing
-        mock_entry["humidity"] = min(95, current["humidity"] + (i % 5) * 5 + (24 - hour) * 0.5)  # Higher at night
-        mock_entry["wind_speed"] = max(0, current["wind_speed"] + (i % 4 - 2) * 0.5)
-        mock_entry["pressure"] = current["pressure"] + (i % 3 - 1) * 2
-        
-        historical.append(mock_entry)
-    
-    return historical
-
-def save_to_csv(data_list, filepath):
-    df = pd.DataFrame(data_list)
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    df = pd.DataFrame([record])
+    filepath = f"data/raw/{city}_current_weather.csv"
+    os.makedirs("data/raw", exist_ok=True)
     df.to_csv(filepath, index=False)
-    logger.info(f"Saved {len(data_list)} records to {filepath}")
+    logger.info(f"Saved → {filepath}")
+    return df
+
+def fetch_historical_weather(city):
+    print(f"Fetching historical weather for {city} (mock)...")
+    records = []
+    for i in range(7):
+        d = datetime.now() - timedelta(days=i)
+        records.append({
+            'city': city,
+            'timestamp': d.strftime("%Y-%m-%d %H:00:00"),
+            'temp': 25 + i % 3,
+            'humidity': 60 + i,
+            'pressure': 1013,
+            'wind_speed': 3.5 + i * 0.2,
+            'rain_1h': 0
+        })
+    df = pd.DataFrame(records)
+    filepath = f"data/raw/{city}_historical_weather.csv"
+    df.to_csv(filepath, index=False)
+    logger.info(f"Saved 7 mock records → {filepath}")
+    return df
 
 if __name__ == "__main__":
-    config = load_config()
-    delhi = next(c for c in config["cities"] if c["name"] == "Delhi")
-    delhi["apis"] = config["apis"]
-    
-    # Fetch current
-    current = fetch_current_weather(delhi)
-    save_to_csv([current], "data/raw/delhi_current_weather.csv")
-    
-    # Mock historical
-    historical = fetch_historical_weather(delhi, days_back=7)
-    save_to_csv(historical, "data/raw/delhi_historical_weather.csv")
+    if len(sys.argv) < 2:
+        print("Usage: python src/data/fetch_weather.py <city>")
+        sys.exit(1)
+    city = sys.argv[1].lower()
+    if city not in CITY_COORDS:
+        print(f"City {city} not supported. Choose: {list(CITY_COORDS.keys())}")
+        sys.exit(1)
+    fetch_current_weather(city)
+    fetch_historical_weather(city)
