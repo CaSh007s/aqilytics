@@ -1,6 +1,5 @@
 """
-Train XGBoost model for any city.
-Handles tiny or empty data with mock training.
+Train model on CURRENT data only (no mock history)
 """
 import pandas as pd
 import xgboost as xgb
@@ -9,86 +8,70 @@ import os
 import sys
 import numpy as np
 
-# === GET CITY ===
 if len(sys.argv) < 2:
     print("Usage: python src/models/train.py <city>")
     sys.exit(1)
 city = sys.argv[1].lower()
 
-# === LOAD DATA ===
 try:
     df = pd.read_csv(f"data/processed/{city}_features.csv")
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
 except FileNotFoundError:
-    print(f"Data not found for {city}. Using mock training...")
-    df = pd.DataFrame()
+    print(f"No data for {city}")
+    sys.exit(1)
 
-# === TARGET: AQI in 6 hours ===
-if len(df) > 0:
-    df['aqi_future'] = df['aqi'].shift(-6)
-    df = df.dropna(subset=['aqi_future'])
-else:
-    df = pd.DataFrame()
+latest = df.iloc[-1:].copy()
+latest['timestamp'] = pd.to_datetime(latest['timestamp'])
 
-# === FEATURES ===
 features = [
     'pm25', 'pm10', 'temp', 'humidity', 'wind_speed',
     'hour', 'is_night', 'pm25_lag_1', 'temp_rolling_6h', 'wind_calms'
 ]
 
-# === IF NO DATA → CREATE MOCK ===
-if len(df) == 0:
-    print(f"No valid data for {city}. Using mock training...")
+train_df = df.tail(6).copy()
+if len(train_df) < 2:
+    print("Not enough data. Using mock training...")
+    base_aqi = latest['aqi'].iloc[0]
     mock = pd.DataFrame({
-        'timestamp': pd.date_range("2025-04-01", periods=20, freq='h'),
-        'aqi': np.random.randint(50, 400, 20),
-        'pm25': np.random.randint(20, 300, 20),
-        'pm10': np.random.randint(30, 400, 20),
-        'temp': np.random.uniform(15, 35, 20),
-        'humidity': np.random.uniform(30, 90, 20),
-        'wind_speed': np.random.uniform(0, 10, 20),
-        'hour': np.random.randint(0, 24, 20),
-        'is_night': np.random.choice([0, 1], 20),
-        'pm25_lag_1': np.random.randint(20, 300, 20),
-        'temp_rolling_6h': np.random.uniform(15, 35, 20),
-        'wind_calms': np.random.choice([0, 1], 20),
-        'aqi_future': np.random.randint(50, 400, 20)
+        'aqi': np.linspace(base_aqi - 20, base_aqi + 20, 6),
+        'pm25': [latest['pm25'].iloc[0]] * 6,
+        'pm10': [latest['pm10'].iloc[0]] * 6,
+        'temp': np.linspace(latest['temp'].iloc[0] - 2, latest['temp'].iloc[0] + 2, 6),
+        'humidity': [latest['humidity'].iloc[0]] * 6,
+        'wind_speed': [latest['wind_speed'].iloc[0]] * 6,
+        'hour': [(latest['timestamp'].dt.hour.iloc[0] - i) % 24 for i in range(6)],
+        'is_night': [1 if h in [22,23,0,1,2,3,4,5,6] else 0 for h in [(latest['timestamp'].dt.hour.iloc[0] - i) % 24 for i in range(6)]],
+        'pm25_lag_1': [latest['pm25'].iloc[0]] * 6,
+        'temp_rolling_6h': [latest['temp'].iloc[0]] * 6,
+        'wind_calms': [latest['wind_calms'].iloc[0]] * 6,
     })
-    df = mock
+    X = mock[features]
+    y = mock['aqi'].shift(-1).fillna(mock['aqi'])
+else:
+    X = train_df[features]
+    y = train_df['aqi'].shift(-1).fillna(train_df['aqi'])
 
-# === FINAL X, y ===
-X = df[features]
-y = df['aqi_future']
-
-# === TRAIN ===
-model = xgb.XGBRegressor(n_estimators=50, learning_rate=0.1, max_depth=4)
+model = xgb.XGBRegressor(n_estimators=20, learning_rate=0.05, max_depth=3)
 model.fit(X, y)
 
-# === SAVE MODEL ===
 os.makedirs("models", exist_ok=True)
-model_path = f"models/xgb_model_{city}.pkl"
-dump(model, model_path)
+dump(model, f"models/xgb_model_{city}.pkl")
 
-# === FORECAST NEXT 6 HOURS ===
-latest = df.iloc[-1:].copy()
-forecast = []
 current = latest.copy()
-
+forecast = []
 for _ in range(6):
     pred = model.predict(current[features])[0]
-    forecast.append(pred)
+    pred = max(0, min(500, pred))
+    forecast.append(round(pred, 1))
     
-    # Update lagged features
-    current['pm25_lag_1'] = current['pm25'].values
+    current['pm25_lag_1'] = current['pm25']
     current['aqi'] = pred
-    current['timestamp'] = pd.to_datetime(current['timestamp']) + pd.Timedelta(hours=1)
+    current['timestamp'] = current['timestamp'] + pd.Timedelta(hours=1)
     current['hour'] = current['timestamp'].dt.hour
     current['is_night'] = current['hour'].isin([22,23,0,1,2,3,4,5,6]).astype(int)
-    current['temp_rolling_6h'] = current['temp'].rolling(6, min_periods=1).mean().iloc[-1]
+    current['temp_rolling_6h'] = current['temp']
 
-# === SAVE FORECAST ===
 future_times = pd.date_range(
-    pd.to_datetime(latest['timestamp'].iloc[0]) + pd.Timedelta(hours=1),
+    start=latest['timestamp'].iloc[0] + pd.Timedelta(hours=1),
     periods=6, freq='h'
 )
 forecast_df = pd.DataFrame({
@@ -98,5 +81,5 @@ forecast_df = pd.DataFrame({
 os.makedirs("data/processed", exist_ok=True)
 forecast_df.to_csv(f"data/processed/{city}_forecast.csv", index=False)
 
-print(f"Model saved → {model_path}")
+print(f"Model saved → models/xgb_model_{city}.pkl")
 print(f"Forecast saved → data/processed/{city}_forecast.csv")
