@@ -3,5 +3,7 @@ pandas
 plotly
 xgboost
 joblib
-numpyscikit-learn
-xgboost
+numpy
+scikit-learn
+python-dotenv
+requests
