@@ -26,6 +26,8 @@ jobs:
           python src/data/fetch_aqi.py bangalore
           python src/data/fetch_aqi.py kolkata
           python src/data/fetch_aqi.py bhopal
+        env:
+          WAQI_TOKEN: ${{ secrets.WAQI_TOKEN }}
 
       - name: Fetch Weather
         run: |
@@ -34,6 +36,8 @@ jobs:
           python src/data/fetch_weather.py bangalore
           python src/data/fetch_weather.py kolkata
           python src/data/fetch_weather.py bhopal
+        env:
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
 
       - name: Fetch CPCB PM2.5 (Real India Data)
         run: |
