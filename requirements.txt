@@ -3,4 +3,5 @@ pandas
 plotly
 xgboost
 joblib
-numpy
+numpyscikit-learn
+xgboost
