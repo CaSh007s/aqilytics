@@ -1,2 +1,2 @@
-timestamp,city,temp,humidity,wind_speed,pressure,rain_1h,lat,lon
-2025-11-13T17:41:21,Delhi,23.07,38,2.06,1015,0,28.6139,77.209
+city,timestamp,temp,humidity,pressure,wind_speed,rain_1h
+delhi,2025-11-15 12:43:35,22.07,43,1016,1.54,0
