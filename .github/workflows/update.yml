@@ -7,6 +7,10 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -65,8 +69,17 @@ jobs:
 
       - name: Commit & Push
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add data/ models/
-          git commit -m "auto: hourly update $(date -u)" || exit 0
-          git push origin main
+          
+          # Check if there are staged changes.
+          # If no changes, the script will exit successfully.
+          if ! git diff-index --quiet HEAD; then
+            echo "Changes detected. Committing and pushing..."
+            git commit -m "auto: hourly update $(date -u)"
+            git push origin main
+          else
+            echo "No changes to commit."
+          fi
