@@ -1,18 +1,19 @@
+# .github/workflows/update.yml
 name: Hourly AQI Update
 on:
   schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+    - cron: '0 * * * *'   # Every hour
+  workflow_dispatch:      # Manual trigger
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -21,6 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Fetch AQI (WAQI)
@@ -33,7 +35,7 @@ jobs:
         env:
           WAQI_TOKEN: ${{ secrets.WAQI_TOKEN }}
 
-      - name: Fetch Weather
+      - name: Fetch Weather (OpenWeather)
         run: |
           python src/data/fetch_weather.py mumbai
           python src/data/fetch_weather.py delhi
@@ -43,43 +45,25 @@ jobs:
         env:
           OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
 
-      - name: Fetch CPCB PM2.5 (Real India Data)
+      - name: Merge data & Train models
         run: |
-          python src/data/fetch_cpcb.py mumbai
-          python src/data/fetch_cpcb.py delhi
-          python src/data/fetch_cpcb.py bangalore
-          python src/data/fetch_cpcb.py kolkata
-          python src/data/fetch_cpcb.py bhopal
-        env:
-          CPCB_KEY: ${{ secrets.CPCB_KEY }}
+          for city in mumbai delhi bangalore kolkata bhopal; do
+            python src/features/merge_data.py $city
+            python src/models/train.py $city
+          done
 
-      - name: Merge & Train
-        run: |
-          python src/features/merge_data.py mumbai
-          python src/features/merge_data.py delhi
-          python src/features/merge_data.py bangalore
-          python src/features/merge_data.py kolkata
-          python src/features/merge_data.py bhopal
-
-          python src/models/train.py mumbai
-          python src/models/train.py delhi
-          python src/models/train.py bangalore
-          python src/models/train.py kolkata
-          python src/models/train.py bhopal
-
-      - name: Commit & Push
+      - name: Commit & Push updated data/models
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.AQI_PUSH_TOKEN }}@github.com/${{ github.repository }}.git
           
           git add data/ models/
           
-          # Check if there are staged changes.
-          # If no changes, the script will exit successfully.
           if ! git diff-index --quiet HEAD; then
-            echo "Changes detected. Committing and pushing..."
-            git commit -m "auto: hourly update $(date -u)"
+            git commit -m "auto: hourly data update $(date -u +'%Y-%m-%d %H:%M')"
             git push origin main
+            echo "Successfully pushed new data"
           else
-            echo "No changes to commit."
+            echo "No changes to commit"
           fi
