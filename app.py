@@ -44,18 +44,18 @@ def load_hist(city_name):
 
 hist_df = load_hist(city)
 
-# === AQI BANNER ===
+# AQI BANNER
 color = "red" if aqi > 300 else "orange" if aqi > 200 else "yellow" if aqi > 100 else "green"
 st.markdown(f"<h1 style='color:{color}; text-align:center;'>● {city} AQI: {aqi}</h1>", unsafe_allow_html=True)
 
-# === METRICS ===
+# METRICS
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("AQI", aqi)
 c2.metric("PM₂.₅", f"{pm25:.1f} µg/m³")
 c3.metric("PM₁₀", f"{pm10:.1f} µg/m³")
 c4.metric("NO₂", f"{no2:.1f} µg/m³")
 
-# === 1. 30-Day Seasonal Trend (Aligned to Today) ===
+#  1. 30-Day Seasonal Trend
 st.subheader("30-Day Seasonal Trend (Ending Today)")
 if not hist_df.empty and len(hist_df.dropna(subset=['AQI'])) > 10:
     trend = hist_df.dropna(subset=['AQI']).tail(30).copy()
@@ -97,7 +97,7 @@ if not hist_df.empty and 'PM2.5' in hist_df.columns:
 else:
     st.info("No PM2.5 data")
 
-# === 4. 24-Hour Forecast ===
+# 4. 24-Hour Forecast
 st.subheader("24-Hour AQI Forecast (ML Model)")
 if not hist_df.empty and len(hist_df) > 20:
     hist_df['Month'] = hist_df['Date'].dt.month
