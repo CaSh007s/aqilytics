@@ -1,7 +1,4 @@
-"""
-Fetch AQI data for any city.
-Usage: python src/data/fetch_aqi.py mumbai
-"""
+
 import requests
 import pandas as pd
 import os

@@ -1,6 +1,4 @@
-"""
-Train model on CURRENT data only (no mock history)
-"""
+
 import pandas as pd
 import xgboost as xgb
 from joblib import dump

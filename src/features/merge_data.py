@@ -1,7 +1,4 @@
-"""
-Merge AQI + Weather + CPCB PM2.5 → Features CSV
-Usage: python src/features/merge_data.py mumbai
-"""
+
 import pandas as pd
 import os
 import logging
@@ -35,7 +32,7 @@ def merge_aqi_weather(city):
     # Merge on timestamp (hourly)
     merged = pd.merge(aqi, weather, on=['city', 'timestamp'], how='inner')
 
-    # === EXTRACT PM2.5 & PM10 FROM WAQI (FALLBACK) ===
+    # EXTRACT PM2.5 & PM10 FROM WAQI (FALLBACK)
     def extract_pm(pollutants_str):
         if pd.isna(pollutants_str) or pollutants_str in ["{}", "null", ""]:
             return None, None
@@ -51,7 +48,7 @@ def merge_aqi_weather(city):
         lambda x: pd.Series(extract_pm(x))
     )
 
-    # === OVERRIDE WITH REAL CPCB PM2.5 (INDIA) ===
+    # OVERRIDE WITH REAL PM2.5 (INDIA)
     cpcb_path = f"data/raw/{city}_cpcb_pm25.csv"
     if os.path.exists(cpcb_path):
         try:
@@ -71,7 +68,7 @@ def merge_aqi_weather(city):
     # Fallback PM10
     merged['pm10'] = merged['pm10'].fillna(100)
 
-    # === FEATURE ENGINEERING ===
+    # FEATURE ENGINEERING
     merged = merged.sort_values('timestamp')
     merged['hour'] = merged['timestamp'].dt.hour
     merged['is_night'] = merged['hour'].isin([22,23,0,1,2,3,4,5,6]).astype(int)

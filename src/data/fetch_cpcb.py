@@ -1,6 +1,4 @@
-"""
-Fetch REAL PM2.5 from CPCB (India Only)
-"""
+
 import requests
 import pandas as pd
 import os

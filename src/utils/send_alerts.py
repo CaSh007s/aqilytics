@@ -1,13 +1,13 @@
-# verify_project.py
+
 import os
 import json
 from pathlib import Path
 
-# === CONFIG ===
+# CONFIG
 ROOT = Path.cwd()
 print(f"Project Root: {ROOT}")
 
-# === 1. CHECK REQUIRED FOLDERS ===
+# 1. CHECK REQUIRED FOLDERS
 folders = {
     "src/data": "Data fetching scripts",
     "src/features": "Data processing",
@@ -34,7 +34,7 @@ if missing_folders:
 else:
     print("  All folders present")
 
-# === 2. CHECK CRITICAL FILES ===
+# 2. CHECK CRITICAL FILES
 files = {
     "app.py": "Streamlit dashboard",
     "requirements.txt": "Python dependencies",
@@ -57,7 +57,7 @@ for file, desc in files.items():
     if not exists:
         missing_files.append(file)
 
-# === 3. CHECK .gitignore CONTENT ===
+# 3. CHECK .gitignore CONTENT
 gitignore_path = ROOT / ".gitignore"
 if gitignore_path.exists():
     content = gitignore_path.read_text().strip()
@@ -69,7 +69,7 @@ if gitignore_path.exists():
 else:
     print(".gitignore MISSING")
 
-# === 4. TEST DATA GENERATION (MUMBAI ONLY) ===
+# 4. TEST DATA GENERATION (MUMBAI ONLY)
 print(f"\nTESTING DATA PIPELINE (mumbai only)...")
 city = "mumbai"
 
@@ -86,7 +86,7 @@ try:
 except:
     print("  PIPELINE FAILED")
 
-# === 5. CHECK app.py CAN LOAD DATA ===
+# 5. CHECK app.py CAN LOAD DATA
 print(f"\nTESTING app.py DATA LOAD...")
 try:
     import pandas as pd
@@ -104,7 +104,7 @@ try:
 except Exception as e:
     print(f"  ERROR: {e}")
 
-# === 6. FINAL REPORT ===
+# 6. FINAL REPORT
 print(f"\nFINAL REPORT (Nov 16, 2025 06:50 PM IST)")
 print("="*60)
 if not missing_folders and not missing_files:
