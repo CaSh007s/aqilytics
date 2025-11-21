@@ -13,7 +13,7 @@ Predicts AQI for the next 1–24 hours using ML + live weather data.
 ## Quick Start
 ```bash
 pip install -r requirements.txt
-streamlit run app/streamlit_app.py
+streamlit run app.py
 ```
 
 ## Data Pipeline
