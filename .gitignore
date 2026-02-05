@@ -1,0 +1,17 @@
+# --- Dependencies (The 23k Culprits) ---
+node_modules/
+venv/
+__pycache__/
+
+# --- OS Junk ---
+.DS_Store
+
+# --- Secrets ---
+.env
+.env.local
+
+# --- Build Outputs ---
+.next/
+dist/
+build/
+*.pyc
