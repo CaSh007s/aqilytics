@@ -1,65 +1,84 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import dynamic from "next/dynamic"; // 1. Import dynamic
+import { fetchAQI, AQIResponse } from "@/services/api";
+
+// 2. Define SearchBar as a dynamic component (Client Side Only)
+// ssr: false tells Next.js to skip rendering this on the server
+const SearchBar = dynamic(() => import("@/components/SearchBar"), {
+  ssr: false,
+});
 
 export default function Home() {
+  const [data, setData] = useState<AQIResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSearch = async (city: string) => {
+    setLoading(true);
+    setError("");
+    setData(null);
+
+    try {
+      const result = await fetchAQI(city);
+      setData(result);
+    } catch (err) {
+      console.error(err);
+      setError(
+        "Unable to connect to Aeronomy Intelligence. Is the backend running?",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* 1. Ambient Background Glow */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sky-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/5 rounded-full blur-[120px]" />
+      </div>
+
+      {/* 2. Brand Header */}
+      <div
+        className={`text-center transition-all duration-700 ${data ? "mt-12 mb-8" : "mb-12"}`}
+      >
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter bg-linear-to-b from-white to-white/40 bg-clip-text text-transparent mb-4">
+          AERONOMY
+        </h1>
+        <p className="text-slate-400 text-sm md:text-base tracking-[0.2em] uppercase font-medium">
+          Predict. Explain. Protect.
+        </p>
+      </div>
+
+      {/* 3. Search Interface */}
+      <div
+        className={`w-full max-w-md transition-all duration-500 ${data ? "mb-8" : "mb-0"}`}
+      >
+        <SearchBar onSearch={handleSearch} isLoading={loading} />
+      </div>
+
+      {/* 4. Error State */}
+      {error && (
+        <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm animate-pulse">
+          ⚠️ {error}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      )}
+
+      {/* 5. Temporary Data Dump */}
+      {data && (
+        <div className="w-full max-w-2xl mt-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl backdrop-blur-xl">
+            <h3 className="text-sky-400 font-mono mb-4 text-sm uppercase">
+              {"/// INCOMING TELEMETRY"}
+            </h3>
+            <pre className="text-xs text-slate-300 font-mono overflow-x-auto">
+              {JSON.stringify(data, null, 2)}
+            </pre>
+          </div>
         </div>
-      </main>
-    </div>
+      )}
+    </main>
   );
 }
