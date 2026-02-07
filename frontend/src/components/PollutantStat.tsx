@@ -3,6 +3,7 @@ interface PollutantStatProps {
   value: number;
   color?: string;
   delay?: number;
+  onClick?: () => void; // <--- Added this so it accepts clicks
 }
 
 export default function PollutantStat({
@@ -10,13 +11,18 @@ export default function PollutantStat({
   value,
   color = "bg-slate-700",
   delay = 0,
+  onClick,
 }: PollutantStatProps) {
-  // Normalize value for a simple visual bar (capped at 100 for visual consistency)
+  // Cap the visual bar at 100%
   const barWidth = Math.min((value / 100) * 100, 100);
 
   return (
     <div
-      className="flex flex-col p-3 rounded-lg bg-slate-800/30 border border-slate-700/30 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+      onClick={onClick} // <--- Hooked it up here
+      className={`flex flex-col p-3 rounded-lg bg-slate-800/30 border border-slate-700/30 
+                  animate-in fade-in slide-in-from-bottom-2 fill-mode-both 
+                  transition-all duration-300 hover:bg-slate-700/50 
+                  ${onClick ? "cursor-pointer hover:border-sky-500/30" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex justify-between items-end mb-2">
