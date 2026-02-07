@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import AQIDisplay from "@/components/AQIDisplay";
 import WeatherStat from "@/components/WeatherStat";
 import { fetchAQI, AQIResponse } from "@/services/api";
+import PollutantStat from "@/components/PollutantStat";
 
 const SearchBar = dynamic(() => import("@/components/SearchBar"), {
   ssr: false,
@@ -76,8 +77,12 @@ export default function Home() {
             <div className="col-span-2 mb-2">
               {/* Display City + Country Code */}
               <h2 className="text-3xl font-light text-white">
-                {data.city},{" "}
-                <span className="text-sky-400 font-bold">{data.country}</span>
+                {data.city}
+                <span className="text-sky-400 font-bold ml-2 text-xl align-top opacity-80">
+                  {new Intl.DisplayNames(["en"], { type: "region" }).of(
+                    data.country,
+                  )}
+                </span>
               </h2>
               <p className="text-xs text-slate-500 uppercase tracking-widest">
                 Live Telemetry
@@ -108,6 +113,39 @@ export default function Home() {
               unit="hPa"
               delay={400}
             />
+          </div>
+
+          <div className="col-span-1 md:col-span-2 mt-8 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300">
+            <h3 className="text-sm text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-800 pb-2">
+              Atmospheric Composition (µg/m³)
+            </h3>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <PollutantStat
+                label="PM2.5"
+                value={data.pollutants["PM2.5"]}
+                color="bg-red-400"
+                delay={500}
+              />
+              <PollutantStat
+                label="PM10"
+                value={data.pollutants["PM10"]}
+                color="bg-orange-400"
+                delay={600}
+              />
+              <PollutantStat
+                label="NO2"
+                value={data.pollutants["NO2"]}
+                color="bg-yellow-400"
+                delay={700}
+              />
+              <PollutantStat
+                label="Ozone"
+                value={data.pollutants["Ozone"]}
+                color="bg-sky-400"
+                delay={800}
+              />
+            </div>
           </div>
         </div>
       )}

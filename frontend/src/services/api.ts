@@ -13,6 +13,15 @@ export interface AQIResponse {
   current_aqi: number;
   aqi_category: string;
   weather: WeatherData;
+  pollutants: {
+    "PM2.5": number;
+    PM10: number;
+    NO2: number;
+    Ozone: number;
+    SO2: number;
+    CO: number;
+    NH3: number;
+  };
 }
 
 export const fetchAQI = async (city: string): Promise<AQIResponse> => {
