@@ -25,3 +25,13 @@ async def predict_aqi(
         # Handle unexpected crashes
         print(f"🔥 SERVER ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+    
+@router.get("/forecast")
+async def get_aqi_forecast(city: str):
+    try:
+        service = AQIService()
+        return await service.get_forecast(city)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

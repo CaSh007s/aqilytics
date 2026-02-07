@@ -3,8 +3,15 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import AQIDisplay from "@/components/AQIDisplay";
 import WeatherStat from "@/components/WeatherStat";
-import { fetchAQI, AQIResponse } from "@/services/api";
 import PollutantStat from "@/components/PollutantStat";
+import HealthTip from "@/components/HealthTip";
+import ForecastGraph from "@/components/ForecastGraph";
+import {
+  fetchAQI,
+  fetchForecast,
+  AQIResponse,
+  ForecastResponse,
+} from "@/services/api";
 
 const SearchBar = dynamic(() => import("@/components/SearchBar"), {
   ssr: false,
@@ -12,6 +19,7 @@ const SearchBar = dynamic(() => import("@/components/SearchBar"), {
 
 export default function Home() {
   const [data, setData] = useState<AQIResponse | null>(null);
+  const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -19,9 +27,17 @@ export default function Home() {
     setLoading(true);
     setError("");
     setData(null);
+    setForecast(null);
+
     try {
-      const result = await fetchAQI(city);
-      setData(result);
+      // Fetch BOTH APIs in parallel for speed
+      const [currentData, forecastData] = await Promise.all([
+        fetchAQI(city),
+        fetchForecast(city),
+      ]);
+
+      setData(currentData);
+      setForecast(forecastData);
     } catch (err) {
       console.error(err);
       setError("Unable to connect. Is the backend running?");
@@ -32,13 +48,31 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden text-slate-200 selection:bg-sky-500/30">
-      {/* Background Ambience */}
+      {/* Ambient Background Glow */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sky-500/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/5 rounded-full blur-[120px]" />
+        <div
+          className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] transition-colors duration-1000 
+          ${
+            data && data.current_aqi > 300
+              ? "bg-red-600/20"
+              : data && data.current_aqi > 200
+                ? "bg-orange-600/20"
+                : "bg-sky-500/5"
+          }`}
+        />
+        <div
+          className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] transition-colors duration-1000
+          ${
+            data && data.current_aqi > 300
+              ? "bg-purple-600/20"
+              : data && data.current_aqi > 200
+                ? "bg-yellow-600/20"
+                : "bg-indigo-500/5"
+          }`}
+        />
       </div>
 
-      {/* Header - Moves up when data is present */}
+      {/* Header*/}
       <div
         className={`text-center transition-all duration-700 ${data ? "mt-8 mb-8" : "mb-12"}`}
       >
@@ -67,9 +101,13 @@ export default function Home() {
       {/* --- THE DASHBOARD --- */}
       {data && (
         <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-12 items-center animate-in fade-in slide-in-from-bottom-8 duration-700">
-          {/* Left Column: The Big Gauge */}
+          {/* Left Column: The Big Gauge + Health Tip */}
           <div className="flex justify-center md:justify-end">
             <AQIDisplay aqi={data.current_aqi} category={data.aqi_category} />
+
+            <div className="w-full max-w-xs">
+              <HealthTip aqi={data.current_aqi} />
+            </div>
           </div>
 
           {/* Right Column: The Stats Grid */}
@@ -147,6 +185,11 @@ export default function Home() {
               />
             </div>
           </div>
+          {forecast && (
+            <div className="w-full max-w-4xl mt-6 mb-12">
+              <ForecastGraph data={forecast.forecast} />
+            </div>
+          )}
         </div>
       )}
     </main>

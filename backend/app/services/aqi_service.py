@@ -89,6 +89,60 @@ class AQIService:
             "weather": weather_data,
             "pollutants": pollutants
         }
+    
+    async def get_forecast(self, city: str) -> dict:
+        """
+        Fetches 24-hour pollution forecast and runs ML predictions for each hour.
+        """
+        forecast_url = "https://api.openweathermap.org/data/2.5/air_pollution/forecast"
+        
+        async with httpx.AsyncClient() as client:
+            # 1. Get Coordinates (Re-using weather call logic for simplicity)
+            # In a real app, we'd cache the coords, but this is fine for now.
+            w_response = await client.get(self.weather_url, params={
+                "q": city, "appid": settings.OPENWEATHER_API_KEY, "units": "metric"
+            })
+            if w_response.status_code != 200: raise ValueError("City not found")
+            
+            lat = w_response.json()["coord"]["lat"]
+            lon = w_response.json()["coord"]["lon"]
+
+            # 2. Get Forecast Data
+            f_response = await client.get(forecast_url, params={
+                "lat": lat, "lon": lon, "appid": settings.OPENWEATHER_API_KEY
+            })
+            
+            if f_response.status_code != 200: return {"error": "Forecast unavailable"}
+            
+            f_data = f_response.json()
+            hourly_predictions = []
+
+            # 3. Process next 24 hours
+            for item in f_data["list"][:24]:
+                components = item["components"]
+                
+                # Prepare features for the model
+                model_features = {
+                    "month": 2, # Static for MVP
+                    "day_of_week": 4, 
+                    "PM2.5": components.get("pm2_5", 0),
+                    "PM10": components.get("pm10", 0),
+                    "NO2": components.get("no2", 0),
+                    "NH3": components.get("nh3", 0),
+                    "SO2": components.get("so2", 0),
+                    "CO": components.get("co", 0),
+                    "Ozone": components.get("o3", 0),
+                }
+                
+                # RUN ML PREDICTION
+                pred_aqi = predictor.predict(model_features)
+                
+                hourly_predictions.append({
+                    "time": item["dt"], # Unix timestamp
+                    "aqi": round(pred_aqi, 1)
+                })
+                
+            return {"city": city, "forecast": hourly_predictions}
 
     def _get_category(self, aqi):
         if aqi <= 50: return "Good"

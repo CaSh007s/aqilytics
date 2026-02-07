@@ -24,6 +24,16 @@ export interface AQIResponse {
   };
 }
 
+export interface ForecastPoint {
+  time: number;
+  aqi: number;
+}
+
+export interface ForecastResponse {
+  city: string;
+  forecast: ForecastPoint[];
+}
+
 export const fetchAQI = async (city: string): Promise<AQIResponse> => {
   try {
     const response = await fetch(`${API_URL}/aqi/predict?city=${city}`);
@@ -35,6 +45,19 @@ export const fetchAQI = async (city: string): Promise<AQIResponse> => {
     return await response.json();
   } catch (error) {
     console.error("API Error:", error);
+    throw error;
+  }
+};
+
+export const fetchForecast = async (
+  city: string,
+): Promise<ForecastResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/aqi/forecast?city=${city}`);
+    if (!response.ok) throw new Error("Forecast unavailable");
+    return await response.json();
+  } catch (error) {
+    console.error("Forecast API Failed:", error);
     throw error;
   }
 };
