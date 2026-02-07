@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, Optional
 
 # --- Shared Parts ---
 class WeatherData(BaseModel):
@@ -15,6 +15,8 @@ class AQIPredictionRequest(BaseModel):
 # --- Response ---
 class AQIPredictionResponse(BaseModel):
     city: str
+    country: str
     current_aqi: float
     aqi_category: str
     weather: WeatherData
+    pollutants: Dict[str, float]

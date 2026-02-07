@@ -74,7 +74,11 @@ export default function Home() {
           {/* Right Column: The Stats Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 mb-2">
-              <h2 className="text-2xl font-light text-white">{data.city}</h2>
+              {/* Display City + Country Code */}
+              <h2 className="text-3xl font-light text-white">
+                {data.city},{" "}
+                <span className="text-sky-400 font-bold">{data.country}</span>
+              </h2>
               <p className="text-xs text-slate-500 uppercase tracking-widest">
                 Live Telemetry
               </p>

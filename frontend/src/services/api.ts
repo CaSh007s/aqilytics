@@ -9,6 +9,7 @@ export interface WeatherData {
 
 export interface AQIResponse {
   city: string;
+  country: string;
   current_aqi: number;
   aqi_category: string;
   weather: WeatherData;
