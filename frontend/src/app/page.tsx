@@ -1,276 +1,192 @@
 "use client";
-import { useState, useEffect } from "react"; // <--- Imported useEffect
-import dynamic from "next/dynamic";
-import AQIDisplay from "@/components/AQIDisplay";
-import WeatherStat from "@/components/WeatherStat";
-import PollutantStat from "@/components/PollutantStat";
-import HealthTip from "@/components/HealthTip";
-import ForecastGraph from "@/components/ForecastGraph";
-import InfoModal from "@/components/InfoModal";
-import { pollutantInfo } from "@/data/pollutantInfo";
-import {
-  fetchAQI,
-  fetchForecast,
-  AQIResponse,
-  ForecastResponse,
-} from "@/services/api";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import Link from "next/link";
+import { Github, FileText, Activity } from "lucide-react";
+import DropletCanvas from "@/components/landing/DropletCanvas";
+import DottedMap from "@/components/landing/DottedMap";
+import ScrollText from "@/components/landing/ScrollText";
+import BreathingOrb from "@/components/landing/BreathingOrb"; // Re-using your Orb
 
-const SearchBar = dynamic(() => import("@/components/SearchBar"), {
-  ssr: false,
-});
+export default function LandingPage() {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
 
-interface PollutantData {
-  key: string;
-  value: number;
-  name: string;
-  source: string;
-  effect: string;
-  limit: string;
-}
+  // --- Dynamic Orchestration ---
 
-export default function Home() {
-  const [data, setData] = useState<AQIResponse | null>(null);
-  const [forecast, setForecast] = useState<ForecastResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // 1. Droplets: 100% at top, 0% at map, 100% at footer
+  const dropletIntensity = useTransform(
+    scrollYProgress,
+    [0, 0.2, 0.8, 1],
+    [1, 0, 0, 1],
+  );
 
-  // Modal State
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedPollutant, setSelectedPollutant] =
-    useState<PollutantData | null>(null);
+  // 2. Name Reveal: Fades out as you scroll down
+  const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
 
-  // --- MEMORY FEATURE: Load last city on startup ---
-  useEffect(() => {
-    // Check if we are in the browser
-    if (typeof window !== "undefined") {
-      const lastCity = localStorage.getItem("lastCity");
-      if (lastCity) {
-        handleSearch(lastCity);
-      }
-    }
-  }, []);
-
-  const handleSearch = async (city: string) => {
-    setLoading(true);
-    setError("");
-    setData(null);
-    setForecast(null);
-
-    // --- MEMORY FEATURE: Save city to browser memory ---
-    if (typeof window !== "undefined") {
-      localStorage.setItem("lastCity", city);
-    }
-
-    try {
-      const [currentData, forecastData] = await Promise.all([
-        fetchAQI(city),
-        fetchForecast(city),
-      ]);
-
-      setData(currentData);
-      setForecast(forecastData);
-    } catch (err) {
-      console.error(err);
-      setError("Unable to connect. Is the backend running?");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePollutantClick = (key: string, value: number) => {
-    // @ts-expect-error - Dictionary lookup is safe here
-    const info = pollutantInfo[key] || {
-      name: "Unknown",
-      source: "-",
-      effect: "-",
-      limit: "-",
-    };
-    setSelectedPollutant({ key, value, ...info });
-    setModalOpen(true);
-  };
+  // 3. Footer Reveal: Fades in at the very end
+  const footerOpacity = useTransform(scrollYProgress, [0.85, 1], [0, 1]);
+  const footerY = useTransform(scrollYProgress, [0.85, 1], [50, 0]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden text-slate-200 selection:bg-sky-500/30">
-      {/* 1. Ambient Background Glow */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div
-          className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] transition-colors duration-1000 
-          ${
-            data && data.current_aqi > 300
-              ? "bg-red-600/20"
-              : data && data.current_aqi > 200
-                ? "bg-orange-600/20"
-                : "bg-sky-500/5"
-          }`}
-        />
-        <div
-          className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[120px] transition-colors duration-1000
-          ${
-            data && data.current_aqi > 300
-              ? "bg-purple-600/20"
-              : data && data.current_aqi > 200
-                ? "bg-yellow-600/20"
-                : "bg-indigo-500/5"
-          }`}
-        />
-      </div>
-
-      {/* 2. Header */}
-      <div
-        className={`text-center transition-all duration-700 ${data ? "mt-8 mb-8" : "mb-12"}`}
+    <div
+      ref={containerRef}
+      className="bg-slate-950 text-slate-200 selection:bg-sky-500/30"
+    >
+      {/* 1. Global Droplet Layer (Controlled by Scroll) */}
+      <motion.div
+        style={{ opacity: dropletIntensity }}
+        className="fixed inset-0 z-0 pointer-events-none"
       >
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tighter bg-linear-to-b from-white to-white/40 bg-clip-text text-transparent mb-4">
-          AERONOMY
-        </h1>
-        <p className="text-slate-400 text-sm md:text-base tracking-[0.2em] uppercase font-medium">
-          Predict. Explain. Protect.
-        </p>
-      </div>
+        <DropletCanvas intensity={1} />
+      </motion.div>
 
-      {/* 3. Search Bar */}
-      <div
-        className={`w-full max-w-md transition-all duration-500 z-20 ${data ? "mb-12" : "mb-0"}`}
+      {/* 2. Hero Section (Sticky feeling) */}
+      <section className="min-h-screen flex flex-col items-center justify-center relative z-10">
+        {/* Dynamic Header - No Nav, just the name */}
+        <motion.div
+          style={{ opacity: headerOpacity }}
+          className="absolute top-10 left-0 w-full text-center"
+        >
+          <h1 className="text-xl tracking-[0.5em] font-thin uppercase text-slate-400">
+            AQILytics
+          </h1>
+        </motion.div>
+
+        {/* The Breathing Core */}
+        <div className="w-full">
+          <BreathingOrb />
+        </div>
+
+        {/* Scroll Prompt */}
+        <motion.div
+          style={{ opacity: headerOpacity }}
+          className="absolute bottom-10 animate-bounce text-slate-500 text-xs tracking-widest"
+        >
+          SCROLL TO EXPLORE
+        </motion.div>
+      </section>
+
+      {/* 3. The Map Section */}
+      <section className="min-h-screen flex items-center justify-center relative z-10 border-t border-slate-900/30 bg-slate-950/80 backdrop-blur-sm">
+        <div className="w-full max-w-6xl px-4">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-light text-white mb-2">
+              Global Pulse
+            </h2>
+            <p className="text-slate-500">
+              Real-time telemetry across 6 continents.
+            </p>
+          </div>
+          <DottedMap />
+        </div>
+      </section>
+
+      {/* 4. The Scrollytelling Text */}
+      <ScrollText />
+
+      {/* 5. The Dynamic Footer & CTA */}
+      <motion.section
+        style={{ opacity: footerOpacity, y: footerY }}
+        className="min-h-screen flex flex-col items-center justify-center relative z-10 bg-gradient-to-t from-black to-slate-950/0"
       >
-        <SearchBar onSearch={handleSearch} isLoading={loading} />
-      </div>
+        {/* The Two Buttons */}
+        <div className="flex flex-col md:flex-row gap-8 mb-24">
+          {/* Get Started - Magnetic Glow */}
+          <Link href="/dashboard">
+            <button className="group relative w-64 h-16 rounded-full bg-slate-900 border border-slate-700 hover:border-sky-500 transition-all duration-500 overflow-hidden">
+              <div className="absolute inset-0 bg-sky-500/10 scale-0 group-hover:scale-100 rounded-full transition-transform duration-500 blur-xl" />
+              <span className="relative z-10 flex items-center justify-center gap-3 text-lg text-slate-300 group-hover:text-white transition-colors">
+                Get Started <Activity className="w-4 h-4" />
+              </span>
+            </button>
+          </Link>
 
-      {/* 4. Loading State (New!) */}
-      {loading && (
-        <div className="mt-12 flex flex-col items-center animate-pulse">
-          <div className="w-12 h-12 border-4 border-sky-500/30 border-t-sky-400 rounded-full animate-spin mb-4" />
-          <p className="text-sky-400 font-mono text-sm tracking-widest">
-            RUNNING PREDICTION MODEL...
-          </p>
+          {/* Login - Minimal */}
+          <button className="group relative w-64 h-16 rounded-full border border-slate-800 hover:border-slate-600 transition-all">
+            <span className="text-lg text-slate-500 group-hover:text-slate-300 transition-colors">
+              Login Access
+            </span>
+          </button>
         </div>
-      )}
 
-      {/* 5. Error Message */}
-      {error && (
-        <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm animate-pulse">
-          ⚠️ {error}
-        </div>
-      )}
-
-      {/* 6. Main Dashboard Grid */}
-      {!loading && data && (
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-12 items-center animate-in fade-in slide-in-from-bottom-8 duration-700">
-          {/* Left Column: Gauge & Health Tip */}
-          <div className="flex flex-col items-center md:items-end gap-6">
-            <AQIDisplay aqi={data.current_aqi} category={data.aqi_category} />
-            <div className="w-full max-w-xs">
-              <HealthTip aqi={data.current_aqi} />
+        {/* The Footer Content */}
+        <div className="w-full max-w-5xl px-8 grid grid-cols-1 md:grid-cols-3 gap-12 border-t border-slate-900/50 pt-16">
+          {/* Column 1: Identity */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-thin tracking-widest text-white">
+              AQILytics
+            </h3>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Atmospheric intelligence for the modern era. Predicting the unseen
+              to protect the living.
+            </p>
+            <div className="pt-4">
+              <a
+                href="https://github.com/cash007s"
+                target="_blank"
+                className="inline-flex items-center gap-2 text-xs text-slate-600 hover:text-sky-400 transition-colors"
+              >
+                <Github className="w-4 h-4" /> Source Repository
+              </a>
             </div>
           </div>
 
-          {/* Right Column: Stats & Location */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 mb-2">
-              <h2 className="text-3xl font-light text-white">
-                {data.city}
-                <span className="text-sky-400 font-bold ml-2 text-xl align-top opacity-80">
-                  {(() => {
-                    try {
-                      return new Intl.DisplayNames(["en"], {
-                        type: "region",
-                      }).of(data.country);
-                    } catch (_) {
-                      return data.country;
-                    }
-                  })()}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-500 uppercase tracking-widest">
-                Live Telemetry
+          {/* Column 2: Health Resources (Stacked) */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-widest">
+              Health Intelligence
+            </h4>
+            <div className="space-y-3">
+              <a
+                href="#"
+                className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
+              >
+                <FileText className="w-3 h-3" /> WHO Air Quality Guidelines
+              </a>
+              <a
+                href="#"
+                className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
+              >
+                <FileText className="w-3 h-3" /> Health Impact Assessment
+              </a>
+              <a
+                href="#"
+                className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
+              >
+                <FileText className="w-3 h-3" /> Particulate Matter Risks
+              </a>
+            </div>
+          </div>
+
+          {/* Column 3: Legal & Creator */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-widest">
+              Project
+            </h4>
+            <div className="space-y-3">
+              <a
+                href="#"
+                className="block text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Methodology
+              </a>
+              <a
+                href="#"
+                className="block text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                API Status
+              </a>
+              <p className="text-xs text-slate-600 mt-8">
+                Designed by Kalash Pratap Gaur
               </p>
             </div>
-
-            <WeatherStat
-              label="Temperature"
-              value={data.weather.temp}
-              unit="°C"
-              delay={100}
-            />
-            <WeatherStat
-              label="Humidity"
-              value={data.weather.humidity}
-              unit="%"
-              delay={200}
-            />
-            <WeatherStat
-              label="Wind Speed"
-              value={data.weather.wind_speed}
-              unit="m/s"
-              delay={300}
-            />
-            <WeatherStat
-              label="Pressure"
-              value={data.weather.pressure}
-              unit="hPa"
-              delay={400}
-            />
-          </div>
-
-          {/* Pollutant Section */}
-          <div className="col-span-1 md:col-span-2 mt-8 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300">
-            <h3 className="text-sm text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-800 pb-2">
-              Atmospheric Composition (µg/m³)
-            </h3>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <PollutantStat
-                label="PM2.5"
-                value={data.pollutants["PM2.5"]}
-                color="bg-red-400"
-                delay={500}
-                onClick={() =>
-                  handlePollutantClick("PM2.5", data.pollutants["PM2.5"])
-                }
-              />
-              <PollutantStat
-                label="PM10"
-                value={data.pollutants["PM10"]}
-                color="bg-orange-400"
-                delay={600}
-                onClick={() =>
-                  handlePollutantClick("PM10", data.pollutants["PM10"])
-                }
-              />
-              <PollutantStat
-                label="NO2"
-                value={data.pollutants["NO2"]}
-                color="bg-yellow-400"
-                delay={700}
-                onClick={() =>
-                  handlePollutantClick("NO2", data.pollutants["NO2"])
-                }
-              />
-              <PollutantStat
-                label="Ozone"
-                value={data.pollutants["Ozone"]}
-                color="bg-sky-400"
-                delay={800}
-                onClick={() =>
-                  handlePollutantClick("Ozone", data.pollutants["Ozone"])
-                }
-              />
-            </div>
           </div>
         </div>
-      )}
-
-      {/* 7. Forecast Graph */}
-      {!loading && forecast && (
-        <div className="w-full max-w-4xl mt-6 mb-12">
-          <ForecastGraph data={forecast.forecast} />
-        </div>
-      )}
-
-      {/* 8. The Info Modal */}
-      <InfoModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        data={selectedPollutant}
-      />
-    </main>
+      </motion.section>
+    </div>
   );
 }

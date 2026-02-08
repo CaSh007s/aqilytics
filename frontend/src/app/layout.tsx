@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Aeronomy | Air Intelligence",
+  title: "AQILYTICS | Air Intelligence",
   description: "Predict. Explain. Protect.",
 };
 
