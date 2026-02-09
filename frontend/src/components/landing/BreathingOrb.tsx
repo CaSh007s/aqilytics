@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import InteractiveHeroTitle from "./InteractiveHeroTitle";
 
 export default function BreathingOrb() {
   const [permission, setPermission] = useState(false);
@@ -23,30 +24,10 @@ export default function BreathingOrb() {
       {/* Content */}
       <div className="z-10 text-center space-y-8">
         {/* The Title - Revealed by Fog */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="text-6xl md:text-8xl font-thin tracking-tighter text-transparent bg-clip-text bg-linear-to-b from-white to-white/50"
-        >
-          AQILytics
-        </motion.h1>
-
-        {/* State 1: Permission */}
-        {!permission && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2 }}
-            onClick={handleGrant}
-            className="group relative px-8 py-3 bg-transparent overflow-hidden rounded-full border border-white/10 hover:border-white/30 transition-colors"
-          >
-            <span className="relative z-10 text-sm tracking-[0.2em] uppercase text-slate-300 group-hover:text-white transition-colors">
-              Allow us to breathe your air
-            </span>
-            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity blur-md" />
-          </motion.button>
-        )}
+        {/* The Title - Revealed by Fog */}
+        <div className="flex justify-center">
+          <InteractiveHeroTitle />
+        </div>
 
         {/* State 2: The Breathing Data */}
         {permission && aqi && (

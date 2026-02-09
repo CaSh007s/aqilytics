@@ -7,6 +7,7 @@ import DropletCanvas from "@/components/landing/DropletCanvas";
 import DottedMap from "@/components/landing/DottedMap";
 import ScrollText from "@/components/landing/ScrollText";
 import BreathingOrb from "@/components/landing/BreathingOrb"; // Re-using your Orb
+import InteractiveHeroTitle from "@/components/landing/InteractiveHeroTitle";
 
 export default function LandingPage() {
   const containerRef = useRef(null);
@@ -47,14 +48,6 @@ export default function LandingPage() {
       {/* 2. Hero Section (Sticky feeling) */}
       <section className="min-h-screen flex flex-col items-center justify-center relative z-10">
         {/* Dynamic Header - No Nav, just the name */}
-        <motion.div
-          style={{ opacity: headerOpacity }}
-          className="absolute top-10 left-0 w-full text-center"
-        >
-          <h1 className="text-xl tracking-[0.5em] font-thin uppercase text-slate-400">
-            AQILytics
-          </h1>
-        </motion.div>
 
         {/* The Breathing Core */}
         <div className="w-full">
