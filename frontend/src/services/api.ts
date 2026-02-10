@@ -27,6 +27,13 @@ export interface AQIResponse {
 export interface ForecastPoint {
   time: number;
   aqi: number;
+  pollutants: {
+    "PM2.5": number;
+    PM10: number;
+    NO2: number;
+    Ozone: number;
+    SO2: number;
+  };
 }
 
 export interface ForecastResponse {

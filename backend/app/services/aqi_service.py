@@ -1,7 +1,7 @@
 import httpx
 from app.core.config import settings
 from app.ml.predict import AQIPredictor
-from app.schemas import AQIPredictionResponse
+from app.schemas import AQIPredictionResponse, AQIForecastResponse, ForecastPoint
 
 # Initialize the model loader ONCE at module level
 predictor = AQIPredictor()
@@ -90,7 +90,7 @@ class AQIService:
             "pollutants": pollutants
         }
     
-    async def get_forecast(self, city: str) -> dict:
+    async def get_forecast(self, city: str) -> AQIForecastResponse:
         """
         Fetches 24-hour pollution forecast and runs ML predictions for each hour.
         """
@@ -112,7 +112,8 @@ class AQIService:
                 "lat": lat, "lon": lon, "appid": settings.OPENWEATHER_API_KEY
             })
             
-            if f_response.status_code != 200: return {"error": "Forecast unavailable"}
+            if f_response.status_code != 200: 
+                raise ValueError("Remote forecast service unavailable")
             
             f_data = f_response.json()
             hourly_predictions = []
@@ -137,12 +138,19 @@ class AQIService:
                 # RUN ML PREDICTION
                 pred_aqi = predictor.predict(model_features)
                 
-                hourly_predictions.append({
-                    "time": item["dt"], # Unix timestamp
-                    "aqi": round(pred_aqi, 1)
-                })
+                hourly_predictions.append(ForecastPoint(
+                    time=item["dt"],
+                    aqi=round(pred_aqi, 1),
+                    pollutants={
+                        "PM2.5": components.get("pm2_5", 0),
+                        "PM10": components.get("pm10", 0),
+                        "NO2": components.get("no2", 0),
+                        "Ozone": components.get("o3", 0),
+                        "SO2": components.get("so2", 0),
+                    }
+                ))
                 
-            return {"city": city, "forecast": hourly_predictions}
+            return AQIForecastResponse(city=city, forecast=hourly_predictions)
 
     def _get_category(self, aqi):
         if aqi <= 50: return "Good"

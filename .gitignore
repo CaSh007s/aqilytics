@@ -1,3 +1,4 @@
+
 # --- Dependencies (The 23k Culprits) ---
 node_modules/
 venv/
@@ -15,3 +16,6 @@ __pycache__/
 dist/
 build/
 *.pyc
+
+# --- Editor Config ---
+.vscode/

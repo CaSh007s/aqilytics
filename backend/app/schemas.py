@@ -24,6 +24,7 @@ class AQIPredictionResponse(BaseModel):
 class ForecastPoint(BaseModel):
     time: int
     aqi: float
+    pollutants: Dict[str, float]
 
 class AQIForecastResponse(BaseModel):
     city: str

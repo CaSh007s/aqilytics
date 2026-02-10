@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.services.aqi_service import AQIService
-from app.schemas import AQIPredictionResponse
+from app.schemas import AQIPredictionResponse, AQIForecastResponse
 
 router = APIRouter()
 service = AQIService()
@@ -26,7 +26,7 @@ async def predict_aqi(
         print(f"🔥 SERVER ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
     
-@router.get("/forecast")
+@router.get("/forecast", response_model=AQIForecastResponse)
 async def get_aqi_forecast(city: str):
     try:
         service = AQIService()
