@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
 import SensorSearch from "@/components/dashboard/SensorSearch";
 import FloatingNav from "@/components/dashboard/FloatingNav";
@@ -10,6 +11,8 @@ import TelemetryStrip from "@/components/dashboard/TelemetryStrip";
 import ContextualComparison from "@/components/dashboard/ContextualComparison";
 import DeepDivePanel from "@/components/dashboard/DeepDivePanel";
 import PredictiveIntelligencePanel from "@/components/dashboard/PredictiveIntelligencePanel";
+import RiskIntelligencePanel from "@/components/dashboard/RiskIntelligencePanel";
+import ReportGateModal from "@/components/dashboard/ReportGateModal";
 import ForecastGraph from "@/components/ForecastGraph";
 import {
   fetchAQI,
@@ -19,10 +22,15 @@ import {
 } from "@/services/api";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<AQIResponse | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [activePollutant, setActivePollutant] = useState<string>("PM2.5");
+
+  // Interaction States
+  const [viewMode, setViewMode] = useState<"dashboard" | "risk">("dashboard");
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // State to track if we have valid data ("Report View") vs "Intake View"
   const hasData = !!data;
@@ -47,9 +55,36 @@ export default function DashboardPage() {
     }
   };
 
+  // Risk Toggle Logic
+  const handleRiskToggle = () => {
+    setViewMode((prev) => (prev === "dashboard" ? "risk" : "dashboard"));
+  };
+
+  // Report Gating Logic
+  const handleReportClick = () => {
+    const isAuthenticated = localStorage.getItem("auth-token");
+    if (isAuthenticated) {
+      console.log("Generating report...");
+      // Future logic for generating PDF
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleLoginRedirect = () => {
+    router.push("/login?redirect=/dashboard");
+  };
+
   return (
-    <main className="min-h-screen text-slate-200 relative overflow-hidden font-sans selection:bg-sky-500/30">
+    <main className="min-h-screen text-slate-200 relative overflow-hidden font-sans selection:bg-sky-500/30 bg-slate-950">
       <AtmosphericBackground />
+
+      {/* Auth Modal Portal */}
+      <ReportGateModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={handleLoginRedirect}
+      />
 
       <AnimatePresence mode="wait">
         {/* === STATE 1: INTAKE CHAMBER === */}
@@ -62,9 +97,25 @@ export default function DashboardPage() {
             transition={{ duration: 0.8 }}
             className="flex flex-col items-center justify-center min-h-screen relative z-10"
           >
-            <h1 className="text-6xl md:text-8xl tracking-[0.2em] font-thin uppercase mb-12 text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-500 opacity-80">
-              AQILYTICS
-            </h1>
+            <div className="flex justify-center mb-12 cursor-default select-none">
+              {"AQILYTICS".split("").map((char, i) => (
+                <motion.span
+                  key={i}
+                  className="text-6xl md:text-8xl font-thin uppercase text-slate-300 inline-block transition-colors"
+                  style={{
+                    marginRight: i === "AQILYTICS".length - 1 ? 0 : "0.2em",
+                  }}
+                  whileHover={{
+                    scale: 1.1,
+                    color: "#38bdf8", // sky-400
+                    textShadow: "0 0 20px rgba(56,189,248,0.5)",
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </div>
 
             <motion.div className="w-full max-w-xl px-6 relative">
               <SensorSearch onSearch={handleSearch} isLoading={loading} />
@@ -79,17 +130,35 @@ export default function DashboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="relative z-10 min-h-screen flex flex-col pb-20"
+            className="relative z-10 min-h-screen flex flex-col"
           >
             {/* Top Navigation Stream */}
             <FloatingNav
               activePollutant={activePollutant}
               onSelectPollutant={setActivePollutant}
               data={data}
+              onRiskClick={handleRiskToggle}
+              onReportClick={handleReportClick}
             />
 
-            {/* Main Content Grid */}
-            <div className="flex-1 w-full max-w-[1600px] mx-auto px-6 pt-32 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Risk Overlay Panel */}
+            <RiskIntelligencePanel
+              isOpen={viewMode === "risk"}
+              onClose={() => setViewMode("dashboard")}
+              data={data}
+            />
+
+            {/* Main Content Grid - Animated Container for Risk Mode */}
+            <motion.div
+              className="flex-1 w-full max-w-400 mx-auto px-6 pt-32 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-8 origin-bottom"
+              animate={{
+                scale: viewMode === "risk" ? 0.92 : 1,
+                opacity: viewMode === "risk" ? 0.4 : 1,
+                filter: viewMode === "risk" ? "blur(4px)" : "blur(0px)",
+                y: viewMode === "risk" ? -20 : 0,
+              }}
+              transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+            >
               {/* Header (Left Aligned for cinematic feel) */}
               <div className="lg:col-span-12 flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-6 mb-4">
                 <div>
@@ -182,7 +251,7 @@ export default function DashboardPage() {
               >
                 <DeepDivePanel pollutant={activePollutant} />
               </motion.div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -16,6 +16,8 @@ interface FloatingNavProps {
   onSelectPollutant: (key: string) => void;
   activePollutant: string | null;
   data: AQIResponse;
+  onRiskClick: () => void;
+  onReportClick: () => void;
 }
 
 const navItems = [
@@ -46,6 +48,8 @@ export default function FloatingNav({
   onSelectPollutant,
   activePollutant,
   data,
+  onRiskClick,
+  onReportClick,
 }: FloatingNavProps) {
   return (
     <motion.nav
@@ -106,6 +110,7 @@ export default function FloatingNav({
 
       {/* Risk Summary Tab */}
       <motion.button
+        onClick={onRiskClick}
         whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
         className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-rose-400 transition-colors"
       >
@@ -117,6 +122,7 @@ export default function FloatingNav({
 
       {/* Download Action */}
       <motion.button
+        onClick={onReportClick}
         whileHover={{
           backgroundColor: "rgba(255,255,255,0.05)",
           color: "#fff",
