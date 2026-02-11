@@ -1,17 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 
 export default function AtmosphericBackground() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return <div className="fixed inset-0 bg-slate-950 -z-50" />;
-
   return (
     <div className="fixed inset-0 bg-slate-950 -z-50 overflow-hidden pointer-events-none">
       {/* 1. Base Gradient (Deep Muted) */}

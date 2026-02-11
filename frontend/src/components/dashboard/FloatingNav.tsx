@@ -9,11 +9,12 @@ import {
   Droplets,
   Sun,
 } from "lucide-react";
+import { AQIResponse } from "@/services/api";
 
 interface FloatingNavProps {
   onSelectPollutant: (key: string) => void;
   activePollutant: string | null;
-  data: any; // Using any for now to speed up prototyping, will type strictly later
+  data: AQIResponse;
 }
 
 const navItems = [
@@ -45,10 +46,6 @@ export default function FloatingNav({
       {navItems.map((item) => {
         const isActive = activePollutant === item.key;
         const Icon = item.icon;
-
-        // Don't show if data doesn't exist for this pollutant
-        // (Assuming data structure matches API response)
-        // For now, we render all to match the design request of "key particulate matters"
 
         return (
           <motion.button

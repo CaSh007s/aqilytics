@@ -86,7 +86,6 @@ export default function DashboardPage() {
             <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{
-                y: 0,
                 opacity: [0.8, 1, 0.8], // 1. Subtle breathing opacity
                 x: mousePos.x * 0.02, // 5. Parallax (slower than background)
                 y: mousePos.y * 0.02,
