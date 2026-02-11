@@ -8,6 +8,7 @@ import {
   CloudRain,
   Droplets,
   Sun,
+  AlertTriangle,
 } from "lucide-react";
 import { AQIResponse } from "@/services/api";
 
@@ -25,6 +26,22 @@ const navItems = [
   { key: "SO2", label: "SO₂", icon: Droplets },
 ];
 
+function getTrendIcon(value: number) {
+  // Mock trend logic for demo purposes
+  const random = Math.random();
+  if (random > 0.6)
+    return <span className="text-emerald-400 text-[10px]">↓</span>;
+  if (random > 0.3) return <span className="text-rose-400 text-[10px]">↑</span>;
+  return <span className="text-slate-400 text-[10px]">→</span>;
+}
+
+function getRiskColor(value: number) {
+  if (value > 150) return "bg-rose-500";
+  if (value > 100) return "bg-orange-500";
+  if (value > 50) return "bg-yellow-500";
+  return "bg-emerald-500";
+}
+
 export default function FloatingNav({
   onSelectPollutant,
   activePollutant,
@@ -35,10 +52,10 @@ export default function FloatingNav({
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
-      className="fixed top-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 p-2 rounded-full bg-slate-900/40 border border-slate-700/50 backdrop-blur-xl shadow-2xl"
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md shadow-2xl shadow-sky-900/10 hover:shadow-sky-900/20 transition-shadow"
     >
-      <div className="flex items-center gap-1 px-2 border-r border-slate-700/50 pr-4 mr-2">
-        <span className="font-bold text-white tracking-widest text-sm">
+      <div className="flex items-center gap-2 px-3 border-r border-white/10 pr-3 mr-1">
+        <span className="font-bold text-white tracking-[0.2em] text-xs">
           AQILYTICS
         </span>
       </div>
@@ -46,44 +63,70 @@ export default function FloatingNav({
       {navItems.map((item) => {
         const isActive = activePollutant === item.key;
         const Icon = item.icon;
+        const value =
+          data.pollutants[item.key as keyof typeof data.pollutants] || 0;
 
         return (
           <motion.button
             key={item.key}
             onClick={() => onSelectPollutant(item.key)}
             whileHover={{
-              scale: 1.05,
-              backgroundColor: "rgba(255,255,255,0.1)",
+              backgroundColor: "rgba(255,255,255,0.05)",
             }}
             whileTap={{ scale: 0.95 }}
             animate={{
               backgroundColor: isActive
-                ? "rgba(56, 189, 248, 0.2)"
+                ? "rgba(56, 189, 248, 0.15)"
                 : "transparent",
-              color: isActive ? "#38bdf8" : "#94a3b8",
             }}
-            className="relative group flex items-center gap-2 px-4 py-2 rounded-full transition-colors"
+            className={`relative group flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${isActive ? "text-sky-400" : "text-slate-400 hover:text-slate-200"}`}
           >
-            <Icon className="w-4 h-4" />
-            <span className="text-sm font-medium">{item.label}</span>
-
-            {/* Hover Glow */}
-            <motion.div
-              className="absolute inset-0 rounded-full bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"
-              layoutId="nav-hover"
+            <div
+              className={`w-1.5 h-1.5 rounded-full ${getRiskColor(value)} shadow-[0_0_8px_currentColor] opacity-80`}
             />
+            <span className="text-xs font-medium tabular-nums tracking-wide">
+              {item.label}
+              <span className="ml-1.5 opacity-70">{value}</span>
+            </span>
+            {getTrendIcon(value)}
+
+            {/* Active Glow */}
+            {isActive && (
+              <motion.div
+                layoutId="nav-active"
+                className="absolute inset-0 rounded-full border border-sky-500/30"
+                transition={{ duration: 0.3 }}
+              />
+            )}
           </motion.button>
         );
       })}
 
-      <div className="h-6 w-[1px] bg-slate-700/50 mx-2" />
+      <div className="h-4 w-[1px] bg-white/10 mx-1" />
 
+      {/* Risk Summary Tab */}
       <motion.button
-        whileHover={{ scale: 1.05, color: "#fff" }}
-        className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white transition-colors text-sm"
+        whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-rose-400 transition-colors"
       >
-        <Download className="w-4 h-4" />
-        <span className="hidden sm:inline">Report</span>
+        <AlertTriangle className="w-3.5 h-3.5" />
+        <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
+          Risk
+        </span>
+      </motion.button>
+
+      {/* Download Action */}
+      <motion.button
+        whileHover={{
+          backgroundColor: "rgba(255,255,255,0.05)",
+          color: "#fff",
+        }}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 transition-colors"
+      >
+        <Download className="w-3.5 h-3.5" />
+        <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
+          Report
+        </span>
       </motion.button>
     </motion.nav>
   );

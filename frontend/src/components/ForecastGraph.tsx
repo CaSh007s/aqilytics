@@ -17,7 +17,6 @@ import {
   Droplets,
   Activity,
 } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface ForecastPoint {
   time: number;
@@ -62,9 +61,9 @@ export default function ForecastGraph({ data }: ForecastGraphProps) {
     POLLUTANT_OPTIONS[0];
 
   return (
-    <div className="w-full bg-slate-900/40 border border-slate-700/50 rounded-3xl backdrop-blur-sm animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 overflow-hidden flex flex-col">
+    <div className="w-full bg-slate-900/40 border border-white/5 rounded-4xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 overflow-hidden flex flex-col min-h-112.5">
       {/* Header & Tabs */}
-      <div className="p-6 border-b border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
           <h3 className="text-sm text-slate-400 uppercase tracking-widest font-mono mb-1">
             24-Hour Prediction Trend
