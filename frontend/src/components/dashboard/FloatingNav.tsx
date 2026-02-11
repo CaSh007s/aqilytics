@@ -9,6 +9,7 @@ import {
   Droplets,
   Sun,
   AlertTriangle,
+  LogOut,
 } from "lucide-react";
 import { AQIResponse } from "@/services/api";
 
@@ -66,7 +67,6 @@ export default function FloatingNav({
 
       {navItems.map((item) => {
         const isActive = activePollutant === item.key;
-        const Icon = item.icon;
         const value =
           data.pollutants[item.key as keyof typeof data.pollutants] || 0;
 
@@ -133,6 +133,21 @@ export default function FloatingNav({
         <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
           Report
         </span>
+      </motion.button>
+
+      {/* Logout Action */}
+      <motion.button
+        onClick={async () => {
+          await import("@/services/auth").then((m) => m.logout());
+        }}
+        whileHover={{
+          backgroundColor: "rgba(255,255,255,0.05)",
+          color: "#fff",
+        }}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-slate-300 transition-colors border-l border-white/10 ml-1 pl-4"
+        title="Logout"
+      >
+        <LogOut className="w-3.5 h-3.5" />
       </motion.button>
     </motion.nav>
   );

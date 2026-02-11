@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.routes import aqi 
+from app.routers import auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -33,6 +34,7 @@ app.add_middleware(
 
 # --- Register Routes ---
 app.include_router(aqi.router, prefix="/api/v1/aqi", tags=["AQI"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 
 @app.get("/")
 async def root():

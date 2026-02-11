@@ -99,11 +99,13 @@ export default function LandingPage() {
           </Link>
 
           {/* Login - Minimal */}
-          <button className="group relative w-64 h-16 rounded-full border border-slate-800 hover:border-slate-600 transition-all">
-            <span className="text-lg text-slate-500 group-hover:text-slate-300 transition-colors">
-              Login Access
-            </span>
-          </button>
+          <Link href="/login">
+            <button className="group relative w-64 h-16 rounded-full border border-slate-800 hover:border-slate-600 transition-all">
+              <span className="text-lg text-slate-500 group-hover:text-slate-300 transition-colors">
+                Login Access
+              </span>
+            </button>
+          </Link>
         </div>
 
         {/* The Footer Content */}

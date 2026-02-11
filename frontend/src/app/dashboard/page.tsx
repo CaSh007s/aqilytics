@@ -20,6 +20,7 @@ import {
   AQIResponse,
   ForecastResponse,
 } from "@/services/api";
+import { getSession } from "@/services/auth";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -61,12 +62,16 @@ export default function DashboardPage() {
   };
 
   // Report Gating Logic
-  const handleReportClick = () => {
-    const isAuthenticated = localStorage.getItem("auth-token");
-    if (isAuthenticated) {
-      console.log("Generating report...");
-      // Future logic for generating PDF
-    } else {
+  const handleReportClick = async () => {
+    try {
+      const user = await getSession();
+      if (user) {
+        console.log("Generating report for:", user.username);
+        // Future logic for generating PDF
+      } else {
+        setShowAuthModal(true);
+      }
+    } catch {
       setShowAuthModal(true);
     }
   };
