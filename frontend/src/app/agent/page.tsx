@@ -22,7 +22,7 @@ import {
 } from "@/services/api";
 import { getSession } from "@/services/auth";
 
-export default function DashboardPage() {
+export default function AgentPage() {
   const router = useRouter();
   const [data, setData] = useState<AQIResponse | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
@@ -77,11 +77,11 @@ export default function DashboardPage() {
   };
 
   const handleLoginRedirect = () => {
-    router.push("/login?redirect=/dashboard");
+    router.push("/login?redirect=/agent");
   };
 
   return (
-    <main className="min-h-screen text-slate-200 relative overflow-hidden font-sans selection:bg-sky-500/30 bg-slate-950">
+    <div className="relative w-full">
       <AtmosphericBackground />
 
       {/* Auth Modal Portal */}
@@ -100,7 +100,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
             transition={{ duration: 0.8 }}
-            className="flex flex-col items-center justify-center min-h-screen relative z-10"
+            className="flex flex-col items-center justify-center min-h-[80vh] relative z-10"
           >
             <div className="flex justify-center mb-12 cursor-default select-none">
               {"AQILYTICS".split("").map((char, i) => (
@@ -135,7 +135,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="relative z-10 min-h-screen flex flex-col"
+            className="relative z-10 flex flex-col"
           >
             {/* Top Navigation Stream */}
             <FloatingNav
@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
             {/* Main Content Grid - Animated Container for Risk Mode */}
             <motion.div
-              className="flex-1 w-full max-w-400 mx-auto px-6 pt-32 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-8 origin-bottom"
+              className="flex-1 w-full max-w-7xl mx-auto px-6 pt-10 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-8 origin-bottom"
               animate={{
                 scale: viewMode === "risk" ? 0.92 : 1,
                 opacity: viewMode === "risk" ? 0.4 : 1,
@@ -260,6 +260,6 @@ export default function DashboardPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </main>
+    </div>
   );
 }

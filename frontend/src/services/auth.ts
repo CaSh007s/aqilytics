@@ -21,6 +21,7 @@ export const login = async (
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: formData,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -32,7 +33,10 @@ export const login = async (
 };
 
 export const logout = async (): Promise<void> => {
-  await fetch(`${API_URL}/auth/logout`, { method: "POST" });
+  await fetch(`${API_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
   // Cookie is cleared by backend
   window.location.href = "/login";
 };
@@ -48,6 +52,7 @@ export const signup = async (
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ username, email, password }),
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -58,7 +63,9 @@ export const signup = async (
 
 export const getSession = async (): Promise<User | null> => {
   try {
-    const response = await fetch(`${API_URL}/auth/me`);
+    const response = await fetch(`${API_URL}/auth/me`, {
+      credentials: "include",
+    });
     if (response.ok) {
       return await response.json();
     }

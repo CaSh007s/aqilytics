@@ -89,7 +89,7 @@ export default function LandingPage() {
         {/* The Two Buttons */}
         <div className="flex flex-col md:flex-row gap-8 mb-24">
           {/* Get Started - Magnetic Glow */}
-          <Link href="/dashboard">
+          <Link href="/agent">
             <button className="group relative w-64 h-16 rounded-full bg-slate-900 border border-slate-700 hover:border-sky-500 transition-all duration-500 overflow-hidden">
               <div className="absolute inset-0 bg-sky-500/10 scale-0 group-hover:scale-100 rounded-full transition-transform duration-500 blur-xl" />
               <span className="relative z-10 flex items-center justify-center gap-3 text-lg text-slate-300 group-hover:text-white transition-colors">
