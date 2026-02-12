@@ -38,7 +38,7 @@ export const logout = async (): Promise<void> => {
     credentials: "include",
   });
   // Cookie is cleared by backend
-  window.location.href = "/login";
+  window.location.href = "/";
 };
 
 export const signup = async (

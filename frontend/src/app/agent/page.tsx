@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
 import SensorSearch from "@/components/dashboard/SensorSearch";
-import FloatingNav from "@/components/dashboard/FloatingNav";
+import AuthenticatedNavbar from "@/components/AuthenticatedNavbar";
 import AQIStatusPanel from "@/components/dashboard/AQIStatusPanel";
 import TelemetryStrip from "@/components/dashboard/TelemetryStrip";
 import ContextualComparison from "@/components/dashboard/ContextualComparison";
@@ -135,10 +135,11 @@ export default function AgentPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
-            className="relative z-10 flex flex-col"
+            className="relative z-10 flex flex-col pt-24" // Added padding for navbar
           >
             {/* Top Navigation Stream */}
-            <FloatingNav
+            <AuthenticatedNavbar
+              variant="agent"
               activePollutant={activePollutant}
               onSelectPollutant={setActivePollutant}
               data={data}
