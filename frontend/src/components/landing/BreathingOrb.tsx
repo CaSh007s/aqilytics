@@ -1,17 +1,11 @@
 "use client";
-import { motion } from "framer-motion";
-import { useState } from "react";
+// motion and useState removed (unused)
 import InteractiveHeroTitle from "./InteractiveHeroTitle";
 
 export default function BreathingOrb() {
-  const [permission, setPermission] = useState(false);
-  const [aqi, setAqi] = useState<number | null>(null);
+  // State removed as it was unused (permission, aqi)
 
-  const handleGrant = () => {
-    // Simulate API call for "My Location"
-    setPermission(true);
-    setTimeout(() => setAqi(42), 1500); // Fake "Good" AQI for demo
-  };
+  // _handleGrant removed (unused)
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-slate-950">
@@ -30,35 +24,7 @@ export default function BreathingOrb() {
         </div>
 
         {/* State 2: The Breathing Data */}
-        {permission && aqi && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1 }}
-            className="relative"
-          >
-            {/* The Orb */}
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} // Breathing rhythm
-              className="w-48 h-48 rounded-full border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-sm flex items-center justify-center relative"
-            >
-              <div className="text-5xl font-light text-emerald-400">{aqi}</div>
-
-              {/* Ripple Effect */}
-              <div className="absolute inset-0 border border-emerald-500/20 rounded-full animate-ping opacity-20" />
-            </motion.div>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              className="mt-6 text-sm text-slate-500 tracking-widest uppercase"
-            >
-              Kothri Kalan • Good Air
-            </motion.p>
-          </motion.div>
-        )}
+        {/* State 2: The Breathing Data - Temporarily removed as it was unreachable */}
       </div>
     </div>
   );

@@ -7,17 +7,14 @@ import { Search } from "lucide-react";
 interface SensorSearchProps {
   onSearch: (city: string) => void;
   isLoading: boolean;
+  onFocusChange?: (focused: boolean) => void;
 }
 
 export default function SensorSearch({
   onSearch,
   isLoading,
   onFocusChange,
-}: {
-  onSearch: (city: string) => void;
-  isLoading: boolean;
-  onFocusChange?: (focused: boolean) => void;
-}) {
+}: SensorSearchProps) {
   const [focused, setFocused] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [city, setCity] = useState("");

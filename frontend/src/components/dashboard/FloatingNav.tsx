@@ -29,7 +29,7 @@ const navItems = [
   { key: "SO2", label: "SO₂", icon: Droplets },
 ];
 
-function getTrendIcon(value: number) {
+function getTrendIcon() {
   // Mock trend logic for demo purposes
   const random = Math.random();
   if (random > 0.6)
@@ -92,7 +92,7 @@ export default function FloatingNav({
               {item.label}
               <span className="ml-1.5 opacity-70">{value}</span>
             </span>
-            {getTrendIcon(value)}
+            {getTrendIcon()}
 
             {/* Active Glow */}
             {isActive && (

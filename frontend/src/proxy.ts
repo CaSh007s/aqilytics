@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export default function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   // Check for the session cookie
   const token = request.cookies.get("access_token");
 

@@ -7,7 +7,7 @@ import DropletCanvas from "@/components/landing/DropletCanvas";
 import DottedMap from "@/components/landing/DottedMap";
 import ScrollText from "@/components/landing/ScrollText";
 import BreathingOrb from "@/components/landing/BreathingOrb"; // Re-using your Orb
-import InteractiveHeroTitle from "@/components/landing/InteractiveHeroTitle";
+// InteractiveHeroTitle removed (unused)
 
 export default function LandingPage() {
   const containerRef = useRef(null);
