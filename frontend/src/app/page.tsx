@@ -98,11 +98,11 @@ export default function LandingPage() {
             </button>
           </Link>
 
-          {/* Login - Minimal */}
-          <Link href="/login">
+          {/* GitHub Repository */}
+          <Link href="https://github.com/CaSh007s/aeronomy" target="_blank">
             <button className="group relative w-64 h-16 rounded-full border border-slate-800 hover:border-slate-600 transition-all">
-              <span className="text-lg text-slate-500 group-hover:text-slate-300 transition-colors">
-                Login Access
+              <span className="text-lg text-slate-500 group-hover:text-slate-300 transition-colors flex items-center justify-center gap-2">
+                <Github className="w-5 h-5" /> GitHub Repository
               </span>
             </button>
           </Link>

@@ -2,9 +2,7 @@ import httpx
 from app.core.config import settings
 from app.ml.predict import AQIPredictor
 from app.schemas import AQIPredictionResponse, AQIForecastResponse, ForecastPoint, AnalysisResponse
-from app.core.database import supabase
 
-# Initialize the model loader ONCE at module level
 predictor = AQIPredictor()
 
 class AQIService:
@@ -161,29 +159,6 @@ class AQIService:
         if aqi <= 400: return "Very Poor"
         return "Severe"
 
-    async def save_analysis(self, user_id: str, data: dict):
-        try:
-            # Prepare payload matching table structure
-            payload = {
-                "user_id": user_id,
-                "city": data["city"],
-                "country": data["country"],
-                "current_aqi": data["current_aqi"],
-                "aqi_category": data["aqi_category"],
-                "pollutants": data["pollutants"], 
-                "weather": data["weather"],
-            }
-            # Add logging to debug
-            print(f"DEBUG: Saving analysis for {user_id} - City: {data['city']}")
-            supabase.table("analyses").insert(payload).execute()
-        except Exception as e:
-            print(f"⚠️ Failed to save analysis history: {e}")
-
-    async def get_history(self, user_id: str):
-        try:
-            response = supabase.table("analyses").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(50).execute()
-            print(f"DEBUG: Fetched history for {user_id}: {len(response.data) if response.data else 0} items")
-            return response.data or []
-        except Exception as e:
-            print(f"⚠️ Failed to fetch history: {e}")
-            return []
+    # History methods disabled for open access version
+    # async def save_analysis(self, user_id: str, data: dict): ...
+    # async def get_history(self, user_id: str): ...

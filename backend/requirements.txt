@@ -45,4 +45,4 @@ uvloop==0.22.1
 watchfiles==1.1.1
 websockets==16.0
 xgboost==2.0.3
-supabase
+

@@ -30,11 +30,7 @@ class AQIForecastResponse(BaseModel):
     city: str
     forecast: List[ForecastPoint]
 
-class UserData(BaseModel):
-    username: str
-    email: Optional[str] = None
-    role: str = "user"
-    id: str
+# UserData removed
 
 class AnalysisResponse(BaseModel):
     id: str

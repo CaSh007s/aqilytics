@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -16,7 +16,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
-import { getSession, User } from "@/services/auth";
+import Navbar from "@/components/Navbar";
+import { fetchAQIByCoords } from "@/services/api";
+// import { getSession, User } from "@/services/auth";
 
 interface Analysis {
   city: string;
@@ -42,7 +44,10 @@ interface ActivityItem {
 export default function DashboardHome() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  // User state removed
+  const searchParams = useSearchParams();
+  const latParam = searchParams.get("lat");
+  const lonParam = searchParams.get("lon");
   const [showAllActivity, setShowAllActivity] = useState(false);
   // State for mock data
   const [latestAnalysis, setLatestAnalysis] = useState<Analysis | null>(null);
@@ -53,101 +58,69 @@ export default function DashboardHome() {
   useEffect(() => {
     // Artificial minimum load time to prevent flicker
     const minLoadTime = new Promise((resolve) => setTimeout(resolve, 800));
-    const sessionPromise = getSession();
 
-    Promise.all([sessionPromise, minLoadTime]).then(([session]) => {
-      if (!session) {
-        router.push("/login?redirect=/dashboard");
-      } else {
-        setUser(session);
-        // Mock Data Initialization (In real app, fetch here)
+    // Simulating open access load
+    minLoadTime.then(() => {
+      // If we have coordinates, fetch real data
+      if (latParam && lonParam) {
+        setLoading(true);
+        fetchAQIByCoords(parseFloat(latParam), parseFloat(lonParam))
+          .then((data) => {
+            const analysis: Analysis = {
+              city: data.city,
+              aqi: data.current_aqi,
+              category: data.aqi_category,
+              timestamp: new Date().toISOString(),
+              trend: "stable", // API doesn't return trend yet
+            };
+            setLatestAnalysis(analysis);
+            setIsStale(false);
 
-        // Mock Latest Analysis
-        const analysis = {
-          city: "Shanghai",
-          aqi: 142,
-          category: "Unhealthy for Sensitive Groups",
-          timestamp: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-          trend: "rising",
-        };
-        setLatestAnalysis(analysis);
-        setIsStale(true);
+            // Generate insight based on fresh data
+            if (analysis.aqi > 150)
+              setInsight({
+                message: "Exposure risk elevated. Limit outdoor exertion.",
+                color: "text-orange-300 bg-orange-500/10 border-orange-500/20",
+              });
+            else if (analysis.aqi > 100)
+              setInsight({
+                message:
+                  "Air quality is fair, but sensitive groups should take care.",
+                color: "text-yellow-300 bg-yellow-500/10 border-yellow-500/20",
+              });
+            else
+              setInsight({
+                message: "Air quality is optimized for outdoor activity.",
+                color:
+                  "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
+              });
 
-        // Mock Insight
-        if (analysis.aqi > 150)
-          setInsight({
-            message: "Exposure risk elevated. Limit outdoor exertion.",
-            color: "text-orange-300 bg-orange-500/10 border-orange-500/20",
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Failed to fetch dashboard data", err);
+            // Fallback to empty state or mock?
+            // For now, let's just clear loading so empty state shows
+            setLoading(false);
           });
-        else if (analysis.aqi > 100)
-          setInsight({
-            message:
-              "Air quality is fair, but sensitive groups should take care.",
-            color: "text-yellow-300 bg-yellow-500/10 border-yellow-500/20",
-          });
-        else
-          setInsight({
-            message: "Air quality is optimized for outdoor activity.",
-            color: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
-          });
+        return;
+      }
 
-        // Mock Recent Activity
-        setRecentActivity([
-          {
-            id: 1,
-            city: "Tokyo",
-            aqi: 45,
-            category: "Good",
-            timestamp: "2 hours ago",
-          },
-          {
-            id: 2,
-            city: "Mumbai",
-            aqi: 158,
-            category: "Unhealthy",
-            timestamp: "5 hours ago",
-          },
-          {
-            id: 3,
-            city: "London",
-            aqi: 12,
-            category: "Good",
-            timestamp: "1 day ago",
-          },
-          {
-            id: 4,
-            city: "New York",
-            aqi: 75,
-            category: "Moderate",
-            timestamp: "2 days ago",
-          },
-          {
-            id: 5,
-            city: "Beijing",
-            aqi: 210,
-            category: "Very Unhealthy",
-            timestamp: "3 days ago",
-          },
-          {
-            id: 6,
-            city: "Sydney",
-            aqi: 30,
-            category: "Good",
-            timestamp: "4 days ago",
-          },
-          {
-            id: 7,
-            city: "Paris",
-            aqi: 60,
-            category: "Moderate",
-            timestamp: "5 days ago",
-          },
-        ]);
-
+      // Fallback Mock Data only if no coordinates (or initial load without params)
+      // Actually, if no params, we probably want to show "Use Location" empty state,
+      // so we might NO-OP here or just set loading false.
+      if (!latParam && !lonParam) {
+        // We can keep the mock data for demonstration if user just goes to /dashboard directly,
+        // OR purely rely on empty state. User said "Dashboard should extract coordinates... If no params exist -> show location prompt UI."
+        // The empty state hero in the current code (lines 405+) is a "Ready for first investigation" prompt.
+        // Maybe we just set loading false and let it render empty?
+        // BUT the mock data was "Simulating open access load".
+        // To strictly follow "If no params exist -> show location prompt UI", I should NOT load mock data.
+        // So I will just set loading false.
         setLoading(false);
       }
     });
-  }, [router]);
+  }, [router, latParam, lonParam]);
 
   // Animation Variants
   const containerVariants = {
@@ -275,6 +248,7 @@ export default function DashboardHome() {
 
   return (
     <div className="relative w-full min-h-screen p-8 md:p-12 overflow-hidden">
+      <Navbar variant="dashboard" />
       <AtmosphericBackground />
 
       {/* Subtle Breathing Glow Overlay */}
@@ -287,15 +261,22 @@ export default function DashboardHome() {
           animate="show"
           className="space-y-16" // Increased spacing for breathing room
         >
+          {/* Simple Top Nav */}
+          <div className="flex justify-end mb-4">
+            <Link
+              href="/agent"
+              className="text-slate-500 hover:text-sky-400 text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              Go to Agent <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
           {/* Welcome & Hero Summary Panel */}
           <motion.div variants={containerVariants} className="space-y-10">
             {/* Greeting */}
             <motion.div variants={itemVariants} className="space-y-2">
               <h1 className="text-4xl md:text-5xl font-light text-white tracking-tight">
                 Welcome back,{" "}
-                <span className="font-medium text-sky-400">
-                  {user?.username || "Researcher"}
-                </span>
+                <span className="font-medium text-sky-400">Researcher</span>
               </h1>
               <p className="text-slate-400 text-lg">
                 Here is the status of your most recent investigation.

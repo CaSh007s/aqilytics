@@ -63,6 +63,26 @@ export const fetchAQI = async (city: string): Promise<AQIResponse> => {
   }
 };
 
+export const fetchAQIByCoords = async (
+  lat: number,
+  lon: number,
+): Promise<AQIResponse> => {
+  try {
+    const response = await fetch(
+      `${API_URL}/aqi/predict?lat=${lat}&lon=${lon}`,
+    );
+
+    if (!response.ok) {
+      throw new Error("Location not found or server error");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error;
+  }
+};
+
 export const fetchForecast = async (
   city: string,
 ): Promise<ForecastResponse> => {
@@ -78,11 +98,11 @@ export const fetchForecast = async (
 
 export const fetchHistory = async (): Promise<Analysis[]> => {
   try {
-    const response = await fetch(`${API_URL}/aqi/history`, {
-      credentials: "include",
-    });
-    if (!response.ok) throw new Error("Failed to fetch history");
-    return await response.json();
+    // History is disabled for open access, returning empty array
+    // const response = await fetch(`${API_URL}/aqi/history`);
+    // if (!response.ok) throw new Error("Failed to fetch history");
+    // return await response.json();
+    return [];
   } catch (error) {
     console.error("History API Failed:", error);
     return [];

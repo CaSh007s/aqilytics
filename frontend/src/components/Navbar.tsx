@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Download,
   Wind,
@@ -10,20 +10,16 @@ import {
   Sun,
   AlertTriangle,
   LogOut,
-  Settings,
-  User as UserIcon,
   LayoutDashboard,
   Search,
-  Shield,
-  BarChart,
+  MapPin, // Added for location button
 } from "lucide-react";
 import { AQIResponse } from "@/services/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
-import { getSession, logout, User } from "@/services/auth";
+import { useState } from "react";
 
-interface AuthenticatedNavbarProps {
+interface NavbarProps {
   variant?: "agent" | "dashboard";
   // Agent-specific props
   activePollutant?: string | null;
@@ -39,6 +35,7 @@ const pollutantItems = [
   { key: "NO2", label: "NO₂", icon: CloudRain },
   { key: "Ozone", label: "O₃", icon: Sun },
   { key: "SO2", label: "SO₂", icon: Droplets },
+  // { key: "CO", label: "CO", icon: Flame }, // Example addition if needed
 ];
 
 function getTrendIcon() {
@@ -56,84 +53,45 @@ function getRiskColor(value: number) {
   return "bg-emerald-500";
 }
 
-// Role-based Navigation Configuration
-const NAV_CONFIG = {
-  User: [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Agent", href: "/agent", icon: Search },
-  ],
-  Admin: [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Agent", href: "/agent", icon: Search },
-    { label: "Admin Panel", href: "/admin", icon: Shield },
-  ],
-  Analyst: [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Agent", href: "/agent", icon: Search },
-    { label: "Analytics", href: "/analytics", icon: BarChart },
-  ],
-};
+const navItems = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Agent", href: "/agent", icon: Search },
+];
 
-function getRoleBadgeStyle(role: string) {
-  switch (role.toLowerCase()) {
-    case "admin":
-      return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-    case "analyst":
-      return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
-    default:
-      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-  }
-}
-
-export default function AuthenticatedNavbar({
+export default function Navbar({
   variant = "dashboard",
   activePollutant,
   onSelectPollutant,
   data,
   onRiskClick,
   onReportClick,
-}: AuthenticatedNavbarProps) {
+}: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    getSession().then((userData) => setUser(userData));
-  }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleLogoClick = () => {
-    if (user) {
-      router.push("/dashboard");
-    } else {
-      router.push("/");
+    router.push("/");
+  };
+
+  const requestLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported.");
+      return;
     }
-  };
 
-  const handleLogout = async () => {
-    await logout();
-    // Force specific redirect to landing page if logout utility behavior is different
-    window.location.href = "/";
-  };
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
 
-  const currentRole = user?.role || "User";
-  const navItems =
-    NAV_CONFIG[currentRole as keyof typeof NAV_CONFIG] || NAV_CONFIG.User;
+        // Route using coordinates
+        router.push(`/dashboard?lat=${lat}&lon=${lon}`);
+      },
+      () => {
+        alert("Location permission denied.");
+      },
+    );
+  };
 
   return (
     <motion.nav
@@ -159,6 +117,7 @@ export default function AuthenticatedNavbar({
         <>
           {pollutantItems.map((item) => {
             const isActive = activePollutant === item.key;
+            // Provide a default value if data.pollutants is missing specific key
             const value =
               data.pollutants[item.key as keyof typeof data.pollutants] || 0;
 
@@ -270,76 +229,15 @@ export default function AuthenticatedNavbar({
 
           <div className="h-4 w-px bg-white/10 mx-1" />
 
-          {/* User Dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <motion.button
-              onClick={() => setShowDropdown(!showDropdown)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 hover:border-slate-500 transition-colors overflow-hidden"
-            >
-              <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-                {user?.username?.[0]?.toUpperCase() || (
-                  <UserIcon className="w-4 h-4" />
-                )}
-              </div>
-            </motion.button>
-
-            <AnimatePresence>
-              {showDropdown && user && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-3 w-64 p-2 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-50 origin-top-right overflow-hidden ring-1 ring-white/5"
-                >
-                  {/* Identity Section */}
-                  <div className="px-3 py-3 mb-1">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-indigo-500/20">
-                        {user.username?.[0]?.toUpperCase()}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-white">
-                          {user.username}
-                        </span>
-                        <span className="text-xs text-slate-400 font-medium">
-                          {user.email || "No email"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center">
-                      <span
-                        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${getRoleBadgeStyle(
-                          user.role,
-                        )} transition-colors`}
-                      >
-                        {user.role}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-white/5 my-1" />
-
-                  {/* Actions */}
-                  <div className="flex flex-col gap-1 p-1">
-                    <button className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg flex items-center gap-2 transition-all group">
-                      <Settings className="w-4 h-4 text-slate-400 group-hover:text-sky-400 transition-colors" />
-                      Settings
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full px-3 py-2 text-left text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg flex items-center gap-2 transition-all group"
-                    >
-                      <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      Logout
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Location Button (Replaces User Dropdown) */}
+          <motion.button
+            onClick={requestLocation}
+            whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-slate-400 hover:text-sky-400 transition-colors border border-transparent hover:border-sky-500/20"
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            <span className="text-sm font-medium">Use My Location</span>
+          </motion.button>
         </>
       )}
     </motion.nav>

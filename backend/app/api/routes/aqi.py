@@ -1,16 +1,13 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.services.aqi_service import AQIService
-from app.schemas import AQIPredictionResponse, AQIForecastResponse, AnalysisResponse, UserData
-from app.dependencies import get_optional_user, get_current_user
-from fastapi import Depends
+from app.schemas import AQIPredictionResponse, AQIForecastResponse
 
 router = APIRouter()
 service = AQIService()
 
 @router.get("/predict", response_model=AQIPredictionResponse)
 async def predict_aqi(
-    city: str = Query(..., description="Name of the city to predict AQI for"),
-    user: UserData | None = Depends(get_optional_user)
+    city: str = Query(..., description="Name of the city to predict AQI for")
 ):
     """
     Get Real-time AQI prediction for a specific city.
@@ -19,11 +16,7 @@ async def predict_aqi(
     try:
         # The service handles the complex logic (Weather + Model)
         result = await service.get_realtime_aqi(city)
-        
-        # Save history if user is logged in
-        if user:
-            await service.save_analysis(user.id, result)
-            
+        # History saving removed
         return result
         
     except ValueError as e:
@@ -33,18 +26,8 @@ async def predict_aqi(
         # Handle unexpected crashes
         print(f"🔥 SERVER ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-    
-@router.get("/history", response_model=list[AnalysisResponse])
-@router.get("/history", response_model=list[AnalysisResponse])
-async def get_history(user: UserData = Depends(get_current_user)):
-    try:
-        service = AQIService()
-        history = await service.get_history(user.id)
-        print(f"DEBUG: Fetched history for {user.id}: {len(history)} items")
-        return history
-    except Exception as e:
-        print(f"🔥 HISTORY ERROR: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
+# History endpoint removed for open access version
 
 @router.get("/forecast", response_model=AQIForecastResponse)
 async def get_aqi_forecast(city: str):
