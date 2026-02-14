@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
 import SensorSearch from "@/components/dashboard/SensorSearch";
-import AuthenticatedNavbar from "@/components/AuthenticatedNavbar";
 import AQIStatusPanel from "@/components/dashboard/AQIStatusPanel";
 import TelemetryStrip from "@/components/dashboard/TelemetryStrip";
 import ContextualComparison from "@/components/dashboard/ContextualComparison";
@@ -21,6 +20,30 @@ import {
   ForecastResponse,
 } from "@/services/api";
 import { getSession } from "@/services/auth";
+import {
+  CloudFog,
+  Wind,
+  CloudRain,
+  Sun,
+  Droplets,
+  AlertTriangle,
+  Download,
+} from "lucide-react";
+
+const pollutantItems = [
+  { key: "PM2.5", label: "PM2.5", icon: CloudFog },
+  { key: "PM10", label: "PM10", icon: Wind },
+  { key: "NO2", label: "NO₂", icon: CloudRain },
+  { key: "Ozone", label: "O₃", icon: Sun },
+  { key: "SO2", label: "SO₂", icon: Droplets },
+];
+
+function getRiskColor(value: number) {
+  if (value > 150) return "bg-rose-500";
+  if (value > 100) return "bg-orange-500";
+  if (value > 50) return "bg-yellow-500";
+  return "bg-emerald-500";
+}
 
 export default function AgentPage() {
   const router = useRouter();
@@ -137,15 +160,59 @@ export default function AgentPage() {
             transition={{ duration: 1 }}
             className="relative z-10 flex flex-col pt-24" // Added padding for navbar
           >
-            {/* Top Navigation Stream */}
-            <AuthenticatedNavbar
-              variant="agent"
-              activePollutant={activePollutant}
-              onSelectPollutant={setActivePollutant}
-              data={data}
-              onRiskClick={handleRiskToggle}
-              onReportClick={handleReportClick}
-            />
+            {/* Top Control Bar (Replaces Navbar) */}
+            <div className="w-full max-w-7xl mx-auto px-6 mb-8 flex flex-wrap items-center justify-between gap-4">
+              {/* Pollutant Tabs */}
+              <div className="flex items-center gap-2 bg-slate-900/50 p-1.5 rounded-full border border-white/10 backdrop-blur-md">
+                {pollutantItems.map((item) => {
+                  const isActive = activePollutant === item.key;
+                  const value =
+                    (data.pollutants as Record<string, number>)[item.key] || 0;
+
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => setActivePollutant(item.key)}
+                      className={`relative group flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
+                        isActive
+                          ? "bg-sky-500/20 text-sky-400"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                      }`}
+                    >
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full ${getRiskColor(value)} shadow-[0_0_8px_currentColor] opacity-80`}
+                      />
+                      <span className="text-xs font-medium tabular-nums tracking-wide">
+                        {item.label}
+                        <span className="ml-1.5 opacity-70">{value}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRiskToggle}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/50 border border-white/10 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-all backdrop-blur-md"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Risk
+                  </span>
+                </button>
+                <button
+                  onClick={handleReportClick}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/50 border border-white/10 text-slate-400 hover:text-white hover:border-white/30 transition-all backdrop-blur-md"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Report
+                  </span>
+                </button>
+              </div>
+            </div>
 
             {/* Risk Overlay Panel */}
             <RiskIntelligencePanel

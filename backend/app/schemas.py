@@ -29,3 +29,18 @@ class ForecastPoint(BaseModel):
 class AQIForecastResponse(BaseModel):
     city: str
     forecast: List[ForecastPoint]
+
+class UserData(BaseModel):
+    username: str
+    email: Optional[str] = None
+    role: str = "user"
+    id: str
+
+class AnalysisResponse(BaseModel):
+    id: str
+    user_id: str
+    city: str
+    current_aqi: float
+    aqi_category: str
+    created_at: str
+    # pollutants and weather are simple dicts in response if needed

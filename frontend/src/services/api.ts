@@ -37,8 +37,15 @@ export interface ForecastPoint {
 }
 
 export interface ForecastResponse {
-  city: string;
   forecast: ForecastPoint[];
+}
+
+export interface Analysis {
+  id: string;
+  city: string;
+  current_aqi: number;
+  aqi_category: string;
+  created_at: string;
 }
 
 export const fetchAQI = async (city: string): Promise<AQIResponse> => {
@@ -66,5 +73,18 @@ export const fetchForecast = async (
   } catch (error) {
     console.error("Forecast API Failed:", error);
     throw error;
+  }
+};
+
+export const fetchHistory = async (): Promise<Analysis[]> => {
+  try {
+    const response = await fetch(`${API_URL}/aqi/history`, {
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Failed to fetch history");
+    return await response.json();
+  } catch (error) {
+    console.error("History API Failed:", error);
+    return [];
   }
 };

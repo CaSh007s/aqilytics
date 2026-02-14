@@ -1,4 +1,4 @@
-import AuthenticatedNavbar from "@/components/AuthenticatedNavbar";
+import Sidebar from "@/components/Sidebar";
 
 export default function AuthenticatedLayout({
   children,
@@ -6,9 +6,9 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-sky-500/30">
-      <AuthenticatedNavbar variant="dashboard" />
-      <main className="pt-24 min-h-screen">{children}</main>
+    <div className="flex bg-slate-950 text-slate-200 selection:bg-sky-500/30 overflow-hidden">
+      <Sidebar />
+      <main className="flex-1 h-screen overflow-auto relative">{children}</main>
     </div>
   );
 }

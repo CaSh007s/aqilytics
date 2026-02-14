@@ -3,70 +3,25 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import BaseModel
-from supabase import create_client, Client, AuthApiError
+from app.core.database import supabase
 from app.core.config import settings
+from app.schemas import UserData
+from app.dependencies import get_current_user, oauth2_scheme
 
 router = APIRouter()
-
-# --- Security Config ---
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
-
-# --- Supabase Client ---
-# Initialize Supabase client
-# Ensure keys are set in .env
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
 
 # --- Models ---
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-class UserData(BaseModel):
-    username: str
-    email: str | None = None
-    role: str = "user"
-    id: str
-
 class UserSignup(BaseModel):
     username: str
     email: str
     password: str
 
+
 # --- Utils ---
-async def get_current_user(request: Request):
-    token = request.cookies.get("access_token")
-    if not token:
-        # Fallback to Authorization header
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-    
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
-    
-    try:
-        # Verify token with Supabase
-        user_response = supabase.auth.get_user(token)
-        user = user_response.user
-        
-        if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-            
-        # Extract username from metadata if available, or use email part
-        username = user.user_metadata.get("username") if user.user_metadata else user.email.split("@")[0]
-        
-        return UserData(
-            id=user.id,
-            username=username, 
-            email=user.email, 
-            role="researcher" # Default role
-        )
-    except Exception as e:
-        print(f"Auth Error: {e}")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session")
 
 # --- Routes ---
 
@@ -151,7 +106,8 @@ async def signup(response: Response, user_data: UserSignup):
 async def logout(response: Response):
     # Ideally we sign out from Supabase too, but we need the token. 
     # For now, clearing the cookie is sufficient for the client.
-    response.delete_cookie(key="access_token")
+    print("Logout requested. Clearing cookie.")
+    response.delete_cookie(key="access_token", httponly=True, samesite="lax")
     return {"message": "Logged out successfully"}
 
 @router.get("/me", response_model=UserData)

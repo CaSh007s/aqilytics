@@ -14,12 +14,14 @@ import {
   User as UserIcon,
   LayoutDashboard,
   Search,
+  Shield,
+  BarChart,
 } from "lucide-react";
 import { AQIResponse } from "@/services/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { getSession, logout } from "@/services/auth";
+import { useState, useEffect, useRef } from "react";
+import { getSession, logout, User } from "@/services/auth";
 
 interface AuthenticatedNavbarProps {
   variant?: "agent" | "dashboard";
@@ -54,6 +56,35 @@ function getRiskColor(value: number) {
   return "bg-emerald-500";
 }
 
+// Role-based Navigation Configuration
+const NAV_CONFIG = {
+  User: [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Agent", href: "/agent", icon: Search },
+  ],
+  Admin: [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Agent", href: "/agent", icon: Search },
+    { label: "Admin Panel", href: "/admin", icon: Shield },
+  ],
+  Analyst: [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Agent", href: "/agent", icon: Search },
+    { label: "Analytics", href: "/analytics", icon: BarChart },
+  ],
+};
+
+function getRoleBadgeStyle(role: string) {
+  switch (role.toLowerCase()) {
+    case "admin":
+      return "bg-rose-500/10 text-rose-400 border-rose-500/20";
+    case "analyst":
+      return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+    default:
+      return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+  }
+}
+
 export default function AuthenticatedNavbar({
   variant = "dashboard",
   activePollutant,
@@ -65,26 +96,51 @@ export default function AuthenticatedNavbar({
   const router = useRouter();
   const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getSession().then((user) => setIsAuthenticated(!!user));
+    getSession().then((userData) => setUser(userData));
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogoClick = () => {
-    if (isAuthenticated) {
+    if (user) {
       router.push("/dashboard");
     } else {
       router.push("/");
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    // Force specific redirect to landing page if logout utility behavior is different
+    window.location.href = "/";
+  };
+
+  const currentRole = user?.role || "User";
+  const navItems =
+    NAV_CONFIG[currentRole as keyof typeof NAV_CONFIG] || NAV_CONFIG.User;
+
   return (
     <motion.nav
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md shadow-2xl shadow-sky-900/10 hover:shadow-sky-900/20 transition-shadow"
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md shadow-2xl shadow-sky-900/10 hover:shadow-sky-900/20 transition-all"
     >
       {/* Logo */}
       <motion.div
@@ -193,80 +249,93 @@ export default function AuthenticatedNavbar({
       {/* === DASHBOARD LAYOUT: Navigation Links === */}
       {variant === "dashboard" && (
         <>
-          <Link href="/dashboard">
-            <motion.div
-              whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                pathname === "/dashboard"
-                  ? "text-sky-400 bg-sky-500/10"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              Dashboard
-            </motion.div>
-          </Link>
-
-          <Link href="/agent">
-            <motion.div
-              whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                pathname === "/agent"
-                  ? "text-sky-400 bg-sky-500/10"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Search className="w-3.5 h-3.5" />
-              Agent
-            </motion.div>
-          </Link>
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link key={item.href} href={item.href}>
+                <motion.div
+                  whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    isActive
+                      ? "text-sky-400 bg-sky-500/10"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <item.icon className="w-3.5 h-3.5" />
+                  {item.label}
+                </motion.div>
+              </Link>
+            );
+          })}
 
           <div className="h-4 w-px bg-white/10 mx-1" />
 
           {/* User Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <motion.button
               onClick={() => setShowDropdown(!showDropdown)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 hover:border-slate-500 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 hover:border-slate-500 transition-colors overflow-hidden"
             >
-              <UserIcon className="w-4 h-4 text-slate-300" />
+              <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                {user?.username?.[0]?.toUpperCase() || (
+                  <UserIcon className="w-4 h-4" />
+                )}
+              </div>
             </motion.button>
 
             <AnimatePresence>
-              {showDropdown && (
+              {showDropdown && user && (
                 <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute right-0 mt-2 w-48 py-2 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden"
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 mt-3 w-64 p-2 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-50 origin-top-right overflow-hidden ring-1 ring-white/5"
                 >
-                  <button className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 flex items-center gap-2 transition-colors">
-                    <Settings className="w-4 h-4" /> Settings
-                  </button>
-                  <div className="h-px bg-slate-800 my-1" />
-                  <button
-                    onClick={async () => {
-                      await logout();
-                      // Redirect handled by logout utility to /login, but user requested /
-                      // Wait, user requested logout to clear session and redirect to main landing page.
-                      // The logout utility redirects to /login. We should probably override or update it.
-                      // For now, let's manually redirect here if needed, or update the util.
-                      // The util sets window.location.href = "/login".
-                      // I should update the util or handle it here.
-                      // Since consistent behavior is good, I will stick to what the util does OR update util.
-                      // User explicitly said: "not the login page".
-                      // I'll update the navbar to handle the redirect manually if possible, or update the service.
-                      // I'll use window.location.href = "/" after logout call if I can, but the util does it.
-                      // I will update the util in services/auth.ts in a separate step if needed.
-                      // Actually, let's just do it here via router if I modify the util.
-                      // I'll stick to the plan: update standard behavior.
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-rose-400 hover:bg-slate-800 flex items-center gap-2 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" /> Logout
-                  </button>
+                  {/* Identity Section */}
+                  <div className="px-3 py-3 mb-1">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-indigo-500/20">
+                        {user.username?.[0]?.toUpperCase()}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-white">
+                          {user.username}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">
+                          {user.email || "No email"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center">
+                      <span
+                        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${getRoleBadgeStyle(
+                          user.role,
+                        )} transition-colors`}
+                      >
+                        {user.role}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-white/5 my-1" />
+
+                  {/* Actions */}
+                  <div className="flex flex-col gap-1 p-1">
+                    <button className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg flex items-center gap-2 transition-all group">
+                      <Settings className="w-4 h-4 text-slate-400 group-hover:text-sky-400 transition-colors" />
+                      Settings
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full px-3 py-2 text-left text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg flex items-center gap-2 transition-all group"
+                    >
+                      <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      Logout
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
