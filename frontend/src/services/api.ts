@@ -95,16 +95,3 @@ export const fetchForecast = async (
     throw error;
   }
 };
-
-export const fetchHistory = async (): Promise<Analysis[]> => {
-  try {
-    // History is disabled for open access, returning empty array
-    // const response = await fetch(`${API_URL}/aqi/history`);
-    // if (!response.ok) throw new Error("Failed to fetch history");
-    // return await response.json();
-    return [];
-  } catch (error) {
-    console.error("History API Failed:", error);
-    return [];
-  }
-};

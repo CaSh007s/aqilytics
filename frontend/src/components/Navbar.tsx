@@ -17,7 +17,6 @@ import {
 import { AQIResponse } from "@/services/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 
 interface NavbarProps {
   variant?: "agent" | "dashboard";
@@ -192,7 +191,7 @@ export default function Navbar({
 
           {/* Agent Exit Action */}
           <motion.button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/agent")}
             whileHover={{
               backgroundColor: "rgba(255,255,255,0.05)",
               color: "#fff",

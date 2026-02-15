@@ -33,6 +33,7 @@ app.add_middleware(
 # Auth router removed
 app.include_router(aqi.router, prefix="/api/v1/aqi", tags=["aqi"])
 
+
 @app.get("/")
 def read_root():
     return {"message": "Aeronomy API is running 🚀"}

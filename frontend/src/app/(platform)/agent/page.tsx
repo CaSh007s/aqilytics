@@ -5,38 +5,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
 import SensorSearch from "@/components/dashboard/SensorSearch";
-import AQIStatusPanel from "@/components/dashboard/AQIStatusPanel";
-import TelemetryStrip from "@/components/dashboard/TelemetryStrip";
-import ContextualComparison from "@/components/dashboard/ContextualComparison";
-import DeepDivePanel from "@/components/dashboard/DeepDivePanel";
-import PredictiveIntelligencePanel from "@/components/dashboard/PredictiveIntelligencePanel";
-import RiskIntelligencePanel from "@/components/dashboard/RiskIntelligencePanel";
-// import ReportGateModal from "@/components/dashboard/ReportGateModal";
-import ForecastGraph from "@/components/ForecastGraph";
-import {
-  fetchAQI,
-  fetchForecast,
-  AQIResponse,
-  ForecastResponse,
-} from "@/services/api";
-import Navbar from "@/components/Navbar";
-// import { getSession } from "@/services/auth"; // Removed
+import HistorySection from "@/components/HistorySection";
+import { fetchAQI, fetchForecast } from "@/services/api";
+import { HistoryItem } from "@/context/HistoryContext";
 import { ArrowRight } from "lucide-react";
-
-// pollutantItems and getRiskColor removed as they are handled by Navbar now
+import { useHistory } from "@/context/HistoryContext";
 
 export default function AgentPage() {
   const router = useRouter();
-  const [data, setData] = useState<AQIResponse | null>(null);
-  const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activePollutant, setActivePollutant] = useState<string>("PM2.5");
+  const { history, addToHistory } = useHistory();
 
-  // Interaction States
-  const [viewMode, setViewMode] = useState<"dashboard" | "risk">("dashboard");
-
-  // State to track if we have valid data ("Report View") vs "Intake View"
-  const hasData = !!data;
+  // No Supabase, No "hasData" state checks, just Search -> Redirect
 
   const handleSearch = async (city: string) => {
     setLoading(true);
@@ -48,9 +28,12 @@ export default function AgentPage() {
         fetchAQI(city),
         fetchForecast(city),
       ]);
-      setData(currentData);
-      setForecast(forecastData);
-      setActivePollutant("PM2.5");
+
+      // 1. Add to In-Memory History
+      addToHistory(currentData.city, currentData, forecastData);
+
+      // 2. Navigate to Result Page
+      router.push(`/result/${currentData.city}`);
     } catch (err) {
       console.error("Failed to fetch data", err);
     } finally {
@@ -58,210 +41,63 @@ export default function AgentPage() {
     }
   };
 
-  // Risk Toggle Logic
-  const handleRiskToggle = () => {
-    setViewMode((prev) => (prev === "dashboard" ? "risk" : "dashboard"));
+  const handleHistorySelect = (item: HistoryItem) => {
+    // If clicking history, just navigate!
+    // Data is already in context (conceptually), but we might just want to
+    // push to the URL and let the Result page grab it from context or refetch.
+    router.push(`/result/${item.city}`);
   };
-
-  // Report Gating Logic - OPEN ACCESS
-  const handleReportClick = async () => {
-    console.log("Generating report...");
-    // Future logic for generating PDF
-  };
-
-  /*
-  const handleLoginRedirect = () => {
-    router.push("/login?redirect=/agent");
-  };
-  */
 
   return (
     <div className="relative w-full">
       <AtmosphericBackground />
 
-      {/* Auth Modal Portal Removed */}
-
       <AnimatePresence mode="wait">
-        {/* === STATE 1: INTAKE CHAMBER === */}
-        {!hasData && (
-          <motion.div
-            key="intake"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col items-center justify-center min-h-[80vh] relative z-10"
-          >
-            <div className="flex justify-center mb-12 cursor-default select-none">
-              {"AQILYTICS".split("").map((char, i) => (
-                <motion.span
-                  key={i}
-                  className="text-6xl md:text-8xl font-thin uppercase text-slate-300 inline-block transition-colors"
-                  style={{
-                    marginRight: i === "AQILYTICS".length - 1 ? 0 : "0.2em",
-                  }}
-                  whileHover={{
-                    scale: 1.1,
-                    color: "#38bdf8", // sky-400
-                    textShadow: "0 0 20px rgba(56,189,248,0.5)",
-                  }}
-                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                >
-                  {char}
-                </motion.span>
-              ))}
-            </div>
-
-            {/* Simple Top Nav */}
-            <div className="absolute top-8 right-8 z-50">
-              <span
-                onClick={() => router.push("/dashboard")}
-                className="text-slate-500 hover:text-sky-400 text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
+        <motion.div
+          key="intake"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }} // Fade out when navigating away
+          transition={{ duration: 0.8 }}
+          className="flex flex-col items-center justify-center min-h-[80vh] relative z-10"
+        >
+          <div className="flex justify-center mb-12 cursor-default select-none">
+            {"AQILYTICS".split("").map((char, i) => (
+              <motion.span
+                key={i}
+                className="text-6xl md:text-8xl font-thin uppercase text-slate-300 inline-block transition-colors"
+                style={{
+                  marginRight: i === "AQILYTICS".length - 1 ? 0 : "0.2em",
+                }}
+                whileHover={{
+                  scale: 1.1,
+                  color: "#38bdf8", // sky-400
+                  textShadow: "0 0 20px rgba(56,189,248,0.5)",
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
-                <ArrowRight className="w-4 h-4 rotate-180" /> Back to Dashboard
-              </span>
-            </div>
+                {char}
+              </motion.span>
+            ))}
+          </div>
 
-            <motion.div className="w-full max-w-xl px-6 relative">
-              <SensorSearch onSearch={handleSearch} isLoading={loading} />
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* === STATE 2: SCIENTIFIC COMMAND CENTER === */}
-        {hasData && (
-          <motion.div
-            key="report"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
-            className="relative z-10 flex flex-col pt-24" // Added padding for navbar
-          >
-            {/* Top Control Bar (Replaces Navbar) */}
-            <div className="mb-4">
-              <Navbar
-                variant="agent"
-                activePollutant={activePollutant}
-                onSelectPollutant={setActivePollutant}
-                data={data}
-                onRiskClick={handleRiskToggle}
-                onReportClick={handleReportClick}
-              />
-            </div>
-
-            {/* Risk Overlay Panel */}
-            <RiskIntelligencePanel
-              isOpen={viewMode === "risk"}
-              onClose={() => setViewMode("dashboard")}
-              data={data}
-            />
-
-            {/* Main Content Grid - Animated Container for Risk Mode */}
-            <motion.div
-              className="flex-1 w-full max-w-7xl mx-auto px-6 pt-10 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-8 origin-bottom"
-              animate={{
-                scale: viewMode === "risk" ? 0.92 : 1,
-                opacity: viewMode === "risk" ? 0.4 : 1,
-                filter: viewMode === "risk" ? "blur(4px)" : "blur(0px)",
-                y: viewMode === "risk" ? -20 : 0,
-              }}
-              transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+          {/* Simple Top Nav */}
+          <div className="absolute top-8 right-8 z-50">
+            <span
+              onClick={() => router.push("/")}
+              className="text-slate-500 hover:text-sky-400 text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
             >
-              {/* Header (Left Aligned for cinematic feel) */}
-              <div className="lg:col-span-12 flex flex-col md:flex-row justify-between items-end border-b border-white/5 pb-6 mb-4">
-                <div>
-                  <motion.h2
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="text-6xl font-thin text-white tracking-tight"
-                  >
-                    {data.city}
-                  </motion.h2>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-sky-400 font-mono text-sm tracking-widest uppercase mt-2"
-                  >
-                    Live Telemetry • {new Date().toLocaleTimeString()} • Station
-                    ID: #8821X
-                  </motion.p>
-                </div>
-              </div>
+              <ArrowRight className="w-4 h-4 rotate-180" /> Back to Home
+            </span>
+          </div>
 
-              {/* ROW 1: The Core Metrics */}
-              {/* Left: The Eye (AQI) */}
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="lg:col-span-4"
-              >
-                <AQIStatusPanel
-                  aqi={data.current_aqi}
-                  category={data.aqi_category}
-                />
-              </motion.div>
-
-              {/* Right: Telemetry & Comparison */}
-              <div className="lg:col-span-8 flex flex-col gap-6">
-                {/* Telemetry Strip */}
-                <TelemetryStrip weather={data.weather} />
-
-                {/* Comparison & Forecast split */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                  {/* Contextual Comparison */}
-                  <motion.div
-                    initial={{ x: 20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <ContextualComparison
-                      pollutant={activePollutant}
-                      value={
-                        (data.pollutants as Record<string, number>)[
-                          activePollutant
-                        ] || 0
-                      }
-                    />
-                  </motion.div>
-
-                  {/* Predictive Intelligence Panel */}
-                  <motion.div
-                    initial={{ x: 20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="h-full"
-                  >
-                    <PredictiveIntelligencePanel
-                      forecast={forecast ? forecast.forecast : null}
-                    />
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* ROW 2: Expanded Forecast Trajectory */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="lg:col-span-12"
-              >
-                {forecast && <ForecastGraph data={forecast.forecast} />}
-              </motion.div>
-
-              {/* ROW 3: Deep Dive */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7 }}
-                className="lg:col-span-12"
-              >
-                <DeepDivePanel pollutant={activePollutant} />
-              </motion.div>
-            </motion.div>
+          <motion.div className="w-full max-w-xl px-6 relative">
+            <SensorSearch onSearch={handleSearch} isLoading={loading} />
           </motion.div>
-        )}
+
+          {/* History Section now accepts context type directly */}
+          <HistorySection history={history} onSelect={handleHistorySelect} />
+        </motion.div>
       </AnimatePresence>
     </div>
   );

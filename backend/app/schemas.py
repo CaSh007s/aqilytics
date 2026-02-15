@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
+from datetime import datetime
 
 # --- Shared Parts ---
 class WeatherData(BaseModel):
@@ -40,3 +41,19 @@ class AnalysisResponse(BaseModel):
     aqi_category: str
     created_at: str
     # pollutants and weather are simple dicts in response if needed
+# --- History ---
+class HistoryCreate(BaseModel):
+    session_id: str
+    city: str
+    aqi_value: int
+    aqi_category: str
+    full_snapshot: Dict[str, Any]
+
+class HistoryResponse(BaseModel):
+    id: str
+    session_id: str
+    city: str
+    aqi_value: int
+    aqi_category: str
+    created_at: datetime
+    full_snapshot: Dict[str, Any]
