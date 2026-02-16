@@ -4,9 +4,9 @@ const pool =
   global.pool ||
   new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false, // Required for Neon
-    },
+    // Fix for "The SSL modes ... are treated as aliases for 'verify-full'" warning
+    // We explicitly set ssl to true (equivalent to sslmode=require) and allow self-signed certs for Neon
+    ssl: true,
   });
 
 if (process.env.NODE_ENV !== "production") {

@@ -72,7 +72,11 @@ export async function POST(request: Request) {
       // Send verification email (only for Cases 3 & 4)
       const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/verify?token=${verificationToken}`;
 
-      await resend.emails.send({
+      console.log(
+        `Attempting to send email to ${email} with link: ${verifyUrl}`,
+      );
+
+      const emailResponse = await resend.emails.send({
         from: "AQILYTICS <onboarding@resend.dev>",
         to: email,
         subject: "Verify your Daily AQI Report Subscription",
@@ -84,6 +88,16 @@ export async function POST(request: Request) {
           <p><small>If you didn't request this, you can ignore this email.</small></p>
         `,
       });
+
+      console.log("Resend API Response:", emailResponse);
+
+      if (emailResponse.error) {
+        console.error("Resend API Error:", emailResponse.error);
+        return NextResponse.json(
+          { error: "Failed to send verification email" },
+          { status: 500 },
+        );
+      }
 
       return NextResponse.json({ message });
     } finally {

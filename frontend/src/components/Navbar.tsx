@@ -73,18 +73,16 @@ export default function Navbar({
   /* State for Subscription Modal */
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
-  const handleReportDownload = () => {
+  const handleReportDownload = async () => {
     // 1. Trigger the actual download (passed from parent)
-    if (onReportClick) onReportClick();
+    if (onReportClick) {
+      await onReportClick();
+    }
 
     // 2. Queue the modal (non-blocking)
-    // Check if user has previously dismissed/subscribed to avoid nagging
-    const isDismissed = localStorage.getItem("aqi_subscription_dismissed");
-    if (!isDismissed) {
-      setTimeout(() => {
-        setShowSubscriptionModal(true);
-      }, 2000); // 2-second delay for natural flow
-    }
+    setTimeout(() => {
+      setShowSubscriptionModal(true);
+    }, 500); // reduced delay as report generation takes time
   };
 
   const handleLogoClick = () => {

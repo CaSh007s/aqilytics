@@ -2,6 +2,8 @@
 
 import { useEffect, useState, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toPng } from "html-to-image";
+import jsPDF from "jspdf";
 
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
 import AQIStatusPanel from "@/components/dashboard/AQIStatusPanel";
@@ -85,7 +87,35 @@ export default function ResultPage({
   };
 
   const handleReportClick = async () => {
-    console.log("Generating report...");
+    const element = document.getElementById("report-content");
+    if (!element) return;
+
+    try {
+      const dataUrl = await toPng(element, {
+        backgroundColor: "#020617", // slate-950
+        cacheBust: true,
+      });
+
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [element.offsetWidth, element.offsetHeight],
+      });
+
+      pdf.addImage(
+        dataUrl,
+        "PNG",
+        0,
+        0,
+        element.offsetWidth,
+        element.offsetHeight,
+      );
+      pdf.save(
+        `AQI_Report_${city}_${new Date().toISOString().split("T")[0]}.pdf`,
+      );
+    } catch (err) {
+      console.error("Report generation failed", err);
+    }
   };
 
   if (loading || !data) {
@@ -106,10 +136,11 @@ export default function ResultPage({
       <AnimatePresence mode="wait">
         <motion.div
           key="report"
+          id="report-content"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="relative z-10 flex flex-col pt-24"
+          className="relative z-10 flex flex-col pt-24 bg-slate-950"
         >
           {/* Top Control Bar */}
           <div className="mb-4">

@@ -20,6 +20,7 @@ export default function SubscriptionModal({
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [subscribedCity, setSubscribedCity] = useState(city);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +31,7 @@ export default function SubscriptionModal({
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, city }),
+        body: JSON.stringify({ email, city: subscribedCity }),
       });
 
       const data = await res.json();
@@ -63,7 +64,7 @@ export default function SubscriptionModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-0">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 sm:px-0">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -120,13 +121,27 @@ export default function SubscriptionModal({
                       Get Daily Reports
                     </h3>
                     <p className="mt-2 text-slate-400">
-                      Would you like to receive this AQI report for{" "}
-                      <span className="text-white font-medium">{city}</span> via
-                      email every morning?
+                      Get daily AQI reports delivered to your inbox every
+                      morning.
                     </p>
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label htmlFor="city" className="sr-only">
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        id="city"
+                        required
+                        placeholder="Enter city"
+                        value={subscribedCity}
+                        onChange={(e) => setSubscribedCity(e.target.value)}
+                        disabled={status === "loading"}
+                        className="w-full rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-all mb-3"
+                      />
+                    </div>
                     <div>
                       <label htmlFor="email" className="sr-only">
                         Email address
