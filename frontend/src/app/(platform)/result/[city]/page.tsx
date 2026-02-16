@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react"; // Added 'use'
+import { useEffect, useState, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";

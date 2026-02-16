@@ -15,21 +15,12 @@ export default function AgentPage() {
   const [loading, setLoading] = useState(false);
   const { history } = useHistory();
 
-  // No Supabase, No "hasData" state checks, just Search -> Redirect
-
   const handleSearch = async (city: string) => {
     setLoading(true);
-
-    // Immediate navigation - history is handled by the result page
     router.push(`/result/${city}`);
-
-    // We don't need to unset loading here as the page will unmount/navigate
   };
 
   const handleHistorySelect = (item: HistoryItem) => {
-    // If clicking history, just navigate!
-    // Data is already in context (conceptually), but we might just want to
-    // push to the URL and let the Result page grab it from context or refetch.
     router.push(`/result/${item.city}`);
   };
 
