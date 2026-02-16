@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
 import SensorSearch from "@/components/dashboard/SensorSearch";
 import HistorySection from "@/components/HistorySection";
-import { fetchAQI, fetchForecast } from "@/services/api";
 import { HistoryItem } from "@/context/HistoryContext";
 import { ArrowRight } from "lucide-react";
 import { useHistory } from "@/context/HistoryContext";
@@ -14,31 +13,17 @@ import { useHistory } from "@/context/HistoryContext";
 export default function AgentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const { history, addToHistory } = useHistory();
+  const { history } = useHistory();
 
   // No Supabase, No "hasData" state checks, just Search -> Redirect
 
   const handleSearch = async (city: string) => {
     setLoading(true);
-    // Slight artificial delay to allow animations to breathe
-    await new Promise((r) => setTimeout(r, 800));
 
-    try {
-      const [currentData, forecastData] = await Promise.all([
-        fetchAQI(city),
-        fetchForecast(city),
-      ]);
+    // Immediate navigation - history is handled by the result page
+    router.push(`/result/${city}`);
 
-      // 1. Add to In-Memory History
-      addToHistory(currentData.city, currentData, forecastData);
-
-      // 2. Navigate to Result Page
-      router.push(`/result/${currentData.city}`);
-    } catch (err) {
-      console.error("Failed to fetch data", err);
-    } finally {
-      setLoading(false);
-    }
+    // We don't need to unset loading here as the page will unmount/navigate
   };
 
   const handleHistorySelect = (item: HistoryItem) => {

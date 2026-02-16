@@ -76,10 +76,10 @@ export default function AQIStatusPanel({ aqi, category }: AQIStatusPanelProps) {
                   aqi.toString().length <= 2
                     ? "6rem"
                     : aqi.toString().length === 3
-                      ? "5rem"
+                      ? "4rem"
                       : aqi.toString().length === 4
-                        ? "4rem"
-                        : "3.5rem",
+                        ? "3rem"
+                        : "2.5rem",
               }}
             >
               {aqi}

@@ -31,15 +31,22 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     data: AQIResponse,
     forecast: ForecastResponse,
   ) => {
-    const newItem: HistoryItem = {
-      id: crypto.randomUUID(),
-      city,
-      timestamp: new Date(),
-      data,
-      forecast,
-    };
-    // Add to top, prevent duplicates if needed (optional)
-    setHistory((prev) => [newItem, ...prev]);
+    setHistory((prev) => {
+      // Remove any existing entry for this city to avoid duplicates
+      const filtered = prev.filter(
+        (item) => item.city.toLowerCase() !== city.toLowerCase(),
+      );
+
+      const newItem: HistoryItem = {
+        id: crypto.randomUUID(),
+        city,
+        timestamp: new Date(),
+        data,
+        forecast,
+      };
+
+      return [newItem, ...filtered];
+    });
   };
 
   const clearHistory = () => {

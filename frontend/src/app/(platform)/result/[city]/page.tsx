@@ -34,7 +34,7 @@ export default function ResultPage({
   const resolvedParams = use(params);
   const city = decodeURIComponent(resolvedParams.city);
 
-  const { history } = useHistory();
+  const { history, addToHistory } = useHistory();
 
   const [data, setData] = useState<AQIResponse | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
@@ -65,6 +65,9 @@ export default function ResultPage({
         ]);
         setData(currentData);
         setForecast(forecastData);
+
+        // 3. Silently add to history in background
+        addToHistory(currentData.city, currentData, forecastData);
       } catch (err) {
         console.error("Failed to fetch data", err);
         // Handle error (maybe redirect back to agent or show error)
@@ -74,7 +77,7 @@ export default function ResultPage({
     };
 
     loadData();
-  }, [city, history]);
+  }, [city, history, addToHistory]);
 
   // Risk Toggle Logic
   const handleRiskToggle = () => {
