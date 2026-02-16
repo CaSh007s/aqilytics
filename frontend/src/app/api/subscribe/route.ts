@@ -15,7 +15,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if subscription already exists
     const client = await pool.connect();
     try {
       const checkResult = await client.query(
@@ -23,35 +22,58 @@ export async function POST(request: Request) {
         [email],
       );
 
-      if (checkResult.rows.length > 0) {
-        const sub = checkResult.rows[0];
-        if (sub.is_verified) {
-          return NextResponse.json(
-            { message: "You are already subscribed!" },
-            { status: 200 },
-          );
-        } else {
-          // Resend verification email if not verified ??
-          // For now, let's just update the city and token and resend
-        }
-      }
-
+      const message = "Verification email sent";
       const verificationToken = crypto.randomUUID();
 
-      // Upsert subscription (update if exists but not verified, or insert new)
-      await client.query(
-        `INSERT INTO subscriptions (email, city, verification_token, is_verified)
-         VALUES ($1, $2, $3, FALSE)
-         ON CONFLICT (email) 
-         DO UPDATE SET city = $2, verification_token = $3, updated_at = NOW()`,
-        [email, city, verificationToken],
-      );
+      if (checkResult.rows.length > 0) {
+        const sub = checkResult.rows[0];
 
-      // Send verification email
+        // Case 1: Already verified and active
+        if (sub.is_verified && !sub.unsubscribed_at) {
+          // Optional: Update city if they want to change it?
+          // For now, let's allow city update even if active.
+          await client.query(
+            "UPDATE subscriptions SET city = $1, updated_at = NOW() WHERE email = $2",
+            [city, email],
+          );
+          return NextResponse.json(
+            { message: `Subscription updated to ${city}!` },
+            { status: 200 },
+          );
+        }
+
+        // Case 2: Verified but Unsubscribed (Reactivation)
+        if (sub.is_verified && sub.unsubscribed_at) {
+          await client.query(
+            "UPDATE subscriptions SET city = $1, unsubscribed_at = NULL, updated_at = NOW() WHERE email = $2",
+            [city, email],
+          );
+          return NextResponse.json(
+            { message: `Welcome back! Subscription reactivated for ${city}.` },
+            { status: 200 },
+          );
+        }
+
+        // Case 3: Not verified (Resend logic)
+        // We reuse the existing logic to update token and resend
+        await client.query(
+          "UPDATE subscriptions SET city = $1, verification_token = $2, updated_at = NOW() WHERE email = $3",
+          [city, verificationToken, email],
+        );
+      } else {
+        // Case 4: New Subscription
+        await client.query(
+          `INSERT INTO subscriptions (email, city, verification_token, is_verified)
+           VALUES ($1, $2, $3, FALSE)`,
+          [email, city, verificationToken],
+        );
+      }
+
+      // Send verification email (only for Cases 3 & 4)
       const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/verify?token=${verificationToken}`;
 
       await resend.emails.send({
-        from: "AQILYTICS <onboarding@resend.dev>", // Update with verified domain later
+        from: "AQILYTICS <onboarding@resend.dev>",
         to: email,
         subject: "Verify your Daily AQI Report Subscription",
         html: `
@@ -63,7 +85,7 @@ export async function POST(request: Request) {
         `,
       });
 
-      return NextResponse.json({ message: "Verification email sent" });
+      return NextResponse.json({ message });
     } finally {
       client.release();
     }

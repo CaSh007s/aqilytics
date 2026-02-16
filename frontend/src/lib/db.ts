@@ -1,17 +1,17 @@
 import { Pool } from "pg";
 
-let pool: Pool;
-
-if (!global.pool) {
-  global.pool = new Pool({
+const pool =
+  global.pool ||
+  new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
       rejectUnauthorized: false, // Required for Neon
     },
   });
-}
 
-pool = global.pool;
+if (process.env.NODE_ENV !== "production") {
+  global.pool = pool;
+}
 
 export default pool;
 

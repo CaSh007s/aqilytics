@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, CheckCircle, Loader2 } from "lucide-react";
 
@@ -45,9 +45,13 @@ export default function SubscriptionModal({
       // For now, we just rely on parent handling dismissal persistence if needed,
       // or we can set a flag here.
       localStorage.setItem("aqi_subscription_dismissed", "true");
-    } catch (error: any) {
+    } catch (error) {
       setStatus("error");
-      setErrorMessage(error.message);
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred");
+      }
     }
   };
 
@@ -94,7 +98,8 @@ export default function SubscriptionModal({
                     Check your email
                   </h3>
                   <p className="text-slate-400">
-                    We've sent a verification link to <strong>{email}</strong>.
+                    We&apos;ve sent a verification link to{" "}
+                    <strong>{email}</strong>.
                     <br />
                     Click it to confirm your daily report subscription.
                   </p>
