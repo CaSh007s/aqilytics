@@ -15,6 +15,8 @@ import {
   MapPin, // Added for location button
 } from "lucide-react";
 import { AQIResponse } from "@/services/api";
+import { useState } from "react";
+import SubscriptionModal from "@/components/SubscriptionModal";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -68,6 +70,23 @@ export default function Navbar({
   const router = useRouter();
   const pathname = usePathname();
 
+  /* State for Subscription Modal */
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+  const handleReportDownload = () => {
+    // 1. Trigger the actual download (passed from parent)
+    if (onReportClick) onReportClick();
+
+    // 2. Queue the modal (non-blocking)
+    // Check if user has previously dismissed/subscribed to avoid nagging
+    const isDismissed = localStorage.getItem("aqi_subscription_dismissed");
+    if (!isDismissed) {
+      setTimeout(() => {
+        setShowSubscriptionModal(true);
+      }, 2000); // 2-second delay for natural flow
+    }
+  };
+
   const handleLogoClick = () => {
     router.push("/");
   };
@@ -93,152 +112,166 @@ export default function Navbar({
   };
 
   return (
-    <motion.nav
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md shadow-2xl shadow-sky-900/10 hover:shadow-sky-900/20 transition-all"
-    >
-      {/* Logo */}
-      <motion.div
-        onClick={handleLogoClick}
-        whileHover={{ scale: 1.05, textShadow: "0 0 8px rgba(56,189,248,0.5)" }}
-        whileTap={{ scale: 0.95 }}
-        className="flex items-center gap-2 px-3 border-r border-white/10 pr-3 mr-1 cursor-pointer"
+    <>
+      <motion.nav
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
+        className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md shadow-2xl shadow-sky-900/10 hover:shadow-sky-900/20 transition-all"
       >
-        <span className="font-bold text-white tracking-[0.2em] text-xs transition-all">
-          AQILYTICS
-        </span>
-      </motion.div>
+        {/* Logo */}
+        <motion.div
+          onClick={handleLogoClick}
+          whileHover={{
+            scale: 1.05,
+            textShadow: "0 0 8px rgba(56,189,248,0.5)",
+          }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2 px-3 border-r border-white/10 pr-3 mr-1 cursor-pointer"
+        >
+          <span className="font-bold text-white tracking-[0.2em] text-xs transition-all">
+            AQILYTICS
+          </span>
+        </motion.div>
 
-      {/* === AGENT LAYOUT: Pollutant Tabs === */}
-      {variant === "agent" && data && onSelectPollutant && (
-        <>
-          {pollutantItems.map((item) => {
-            const isActive = activePollutant === item.key;
-            // Provide a default value if data.pollutants is missing specific key
-            const value =
-              data.pollutants[item.key as keyof typeof data.pollutants] || 0;
+        {/* === AGENT LAYOUT: Pollutant Tabs === */}
+        {variant === "agent" && data && onSelectPollutant && (
+          <>
+            {pollutantItems.map((item) => {
+              const isActive = activePollutant === item.key;
+              // Provide a default value if data.pollutants is missing specific key
+              const value =
+                data.pollutants[item.key as keyof typeof data.pollutants] || 0;
 
-            return (
-              <motion.button
-                key={item.key}
-                onClick={() => onSelectPollutant(item.key)}
-                whileHover={{
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                }}
-                whileTap={{ scale: 0.95 }}
-                animate={{
-                  backgroundColor: isActive
-                    ? "rgba(56, 189, 248, 0.15)"
-                    : "transparent",
-                }}
-                className={`relative group flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
-                  isActive
-                    ? "text-sky-400"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <div
-                  className={`w-1.5 h-1.5 rounded-full ${getRiskColor(
-                    value,
-                  )} shadow-[0_0_8px_currentColor] opacity-80`}
-                />
-                <span className="text-xs font-medium tabular-nums tracking-wide">
-                  {item.label}
-                  <span className="ml-1.5 opacity-70">{value}</span>
-                </span>
-                {getTrendIcon()}
-
-                {isActive && (
-                  <motion.div
-                    layoutId="nav-active"
-                    className="absolute inset-0 rounded-full border border-sky-500/30"
-                    transition={{ duration: 0.3 }}
-                  />
-                )}
-              </motion.button>
-            );
-          })}
-
-          <div className="h-4 w-px bg-white/10 mx-1" />
-
-          {/* Risk & Report Actions */}
-          <motion.button
-            onClick={onRiskClick}
-            whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-rose-400 transition-colors"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
-              Risk
-            </span>
-          </motion.button>
-
-          <motion.button
-            onClick={onReportClick}
-            whileHover={{
-              backgroundColor: "rgba(255,255,255,0.05)",
-              color: "#fff",
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
-              Report
-            </span>
-          </motion.button>
-
-          {/* Agent Exit Action */}
-          <motion.button
-            onClick={() => router.push("/agent")}
-            whileHover={{
-              backgroundColor: "rgba(255,255,255,0.05)",
-              color: "#fff",
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-slate-300 transition-colors border-l border-white/10 ml-1 pl-4"
-            title="Exit Agent"
-          >
-            <LogOut className="w-3.5 h-3.5 rotate-180" />
-          </motion.button>
-        </>
-      )}
-
-      {/* === DASHBOARD LAYOUT: Navigation Links === */}
-      {variant === "dashboard" && (
-        <>
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link key={item.href} href={item.href}>
-                <motion.div
-                  whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              return (
+                <motion.button
+                  key={item.key}
+                  onClick={() => onSelectPollutant(item.key)}
+                  whileHover={{
+                    backgroundColor: "rgba(255,255,255,0.05)",
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  animate={{
+                    backgroundColor: isActive
+                      ? "rgba(56, 189, 248, 0.15)"
+                      : "transparent",
+                  }}
+                  className={`relative group flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
                     isActive
-                      ? "text-sky-400 bg-sky-500/10"
+                      ? "text-sky-400"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  <item.icon className="w-3.5 h-3.5" />
-                  {item.label}
-                </motion.div>
-              </Link>
-            );
-          })}
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${getRiskColor(
+                      value,
+                    )} shadow-[0_0_8px_currentColor] opacity-80`}
+                  />
+                  <span className="text-xs font-medium tabular-nums tracking-wide">
+                    {item.label}
+                    <span className="ml-1.5 opacity-70">{value}</span>
+                  </span>
+                  {getTrendIcon()}
 
-          <div className="h-4 w-px bg-white/10 mx-1" />
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-active"
+                      className="absolute inset-0 rounded-full border border-sky-500/30"
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
+                </motion.button>
+              );
+            })}
 
-          {/* Location Button (Replaces User Dropdown) */}
-          <motion.button
-            onClick={requestLocation}
-            whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-slate-400 hover:text-sky-400 transition-colors border border-transparent hover:border-sky-500/20"
-          >
-            <MapPin className="w-3.5 h-3.5" />
-            <span className="text-sm font-medium">Use My Location</span>
-          </motion.button>
-        </>
+            <div className="h-4 w-px bg-white/10 mx-1" />
+
+            {/* Risk & Report Actions */}
+            <motion.button
+              onClick={onRiskClick}
+              whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-rose-400 transition-colors"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
+                Risk
+              </span>
+            </motion.button>
+
+            <motion.button
+              onClick={handleReportDownload}
+              whileHover={{
+                backgroundColor: "rgba(255,255,255,0.05)",
+                color: "#fff",
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
+                Report
+              </span>
+            </motion.button>
+
+            {/* Agent Exit Action */}
+            <motion.button
+              onClick={() => router.push("/agent")}
+              whileHover={{
+                backgroundColor: "rgba(255,255,255,0.05)",
+                color: "#fff",
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-slate-300 transition-colors border-l border-white/10 ml-1 pl-4"
+              title="Exit Agent"
+            >
+              <LogOut className="w-3.5 h-3.5 rotate-180" />
+            </motion.button>
+          </>
+        )}
+
+        {/* === DASHBOARD LAYOUT: Navigation Links === */}
+        {variant === "dashboard" && (
+          <>
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link key={item.href} href={item.href}>
+                  <motion.div
+                    whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      isActive
+                        ? "text-sky-400 bg-sky-500/10"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    <item.icon className="w-3.5 h-3.5" />
+                    {item.label}
+                  </motion.div>
+                </Link>
+              );
+            })}
+
+            <div className="h-4 w-px bg-white/10 mx-1" />
+
+            {/* Location Button (Replaces User Dropdown) */}
+            <motion.button
+              onClick={requestLocation}
+              whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-slate-400 hover:text-sky-400 transition-colors border border-transparent hover:border-sky-500/20"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="text-sm font-medium">Use My Location</span>
+            </motion.button>
+          </>
+        )}
+      </motion.nav>
+
+      {/* Subscription Modal (Agent Mode Only) */}
+      {variant === "agent" && data && (
+        <SubscriptionModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          city={data.city}
+        />
       )}
-    </motion.nav>
+    </>
   );
 }
