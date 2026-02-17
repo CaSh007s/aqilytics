@@ -46,63 +46,100 @@ export async function GET(request: Request) {
   const client = await pool.connect();
 
   try {
-    // 2. Fetch Eligible Subscriptions
+    // 2. Fetch Eligible Subscribers with their cities
+    // We group by subscriber so we get one row per user with an array of cities
     const result = await client.query(`
-      SELECT * FROM subscriptions 
-      WHERE is_verified = TRUE 
-      AND (last_sent_at IS NULL OR last_sent_at < NOW() - INTERVAL '24 hours')
-      AND unsubscribed_at IS NULL
+      SELECT s.id, s.email, s.verification_token, 
+             json_agg(sc.city) as cities
+      FROM subscribers s
+      JOIN subscriber_cities sc ON s.id = sc.subscriber_id
+      WHERE s.is_verified = TRUE 
+      AND (s.last_sent_at IS NULL OR s.last_sent_at < NOW() - INTERVAL '24 hours')
+      AND s.unsubscribed_at IS NULL
+      GROUP BY s.id
       LIMIT 50; -- Batch limit to prevent timeouts
     `);
 
-    const subscriptions = result.rows;
+    const subscribers = result.rows;
     const stats = {
-      total: subscriptions.length,
+      total: subscribers.length,
       sent: 0,
       failed: 0,
       skipped: 0,
     };
 
-    log("info", `Found ${stats.total} subscriptions to process`, {
+    log("info", `Found ${stats.total} subscribers to process`, {
       runId,
       count: stats.total,
     });
 
-    // 3. Process Each Subscription
+    // 3. Process Each Subscriber
     const results = [];
 
-    for (const sub of subscriptions) {
+    for (const sub of subscribers) {
       try {
-        // Fetch Data
-        const [aqiData, forecastData] = await Promise.all([
-          fetchAQI(sub.city),
-          fetchForecast(sub.city),
-        ]);
+        const cityReports = [];
 
-        // Generate PDF
-        const pdfBuffer = await generateReportPDF(
-          sub.city,
-          aqiData,
-          forecastData,
-        );
-        console.log("DEBUG: Is Buffer?", Buffer.isBuffer(pdfBuffer));
-        console.log("DEBUG: Constructor?", pdfBuffer.constructor?.name);
+        // Fetch Data for each city
+        for (const city of sub.cities) {
+          try {
+            const [aqiData, forecastData] = await Promise.all([
+              fetchAQI(city),
+              fetchForecast(city),
+            ]);
+            cityReports.push({
+              city,
+              data: aqiData,
+              forecast: forecastData,
+            });
+          } catch (err) {
+            log("error", `Failed to fetch data for ${city}`, {
+              error: String(err),
+            });
+            // We continue with other cities if one fails
+          }
+        }
+
+        if (cityReports.length === 0) {
+          log("warn", `No valid data found for any city for ${sub.email}`, {
+            runId,
+          });
+          stats.skipped++;
+          continue;
+        }
+
+        // Generate Combined PDF
+        const pdfBuffer = await generateReportPDF(cityReports);
 
         // Generate Unsubscribe Link
         const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/unsubscribe?token=${sub.verification_token}`;
 
+        // Prepare Email Content
+        // We'll list the cities in the email body
+        const citiesListHtml = cityReports
+          .map(
+            (r) =>
+              `<li><strong>${r.city}</strong>: ${r.data.current_aqi} (${r.data.aqi_category})</li>`,
+          )
+          .join("");
+
+        const subjectCity =
+          cityReports.length === 1
+            ? cityReports[0].city
+            : "Your Selected Cities";
+
         // Send Email
         const emailResult = await resend.emails.send({
-          from: "AQILYTICS <updates@resend.dev>", // TODO: Verify domain
+          from: "AQILYTICS <updates@resend.dev>",
           to: sub.email,
-          subject: `Daily AQI Report for ${sub.city}`,
+          subject: `Daily AQI Report for ${subjectCity}`,
           html: `
             <h1>Your Daily Air Quality Insight</h1>
-            <p>Here is your daily report for <strong>${sub.city}</strong>.</p>
-            <p>Current AQI: <strong>${aqiData.current_aqi}</strong> (${aqiData.aqi_category})</p>
-            <p>Please find the detailed PDF report attached.</p>
+            <p>Here is your daily report for:</p>
+            <ul>${citiesListHtml}</ul>
+            <p>Please find the detailed PDF report attached containing full analysis for all locations.</p>
             <br />
-            <p><small>Stay safe and breathe easy.</small></p>
+            <p>Stay safe and breathe easy.</p>
             <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 20px 0;" />
             <p style="font-size: 12px; color: #666;">
               <a href="${unsubscribeUrl}" style="color: #666; text-decoration: underline;">Unsubscribe</a> or manage your preferences.
@@ -110,7 +147,7 @@ export async function GET(request: Request) {
           `,
           attachments: [
             {
-              filename: `AQI_Report_${sub.city}_${new Date().toISOString().split("T")[0]}.pdf`,
+              filename: `AQI_Report_${new Date().toISOString().split("T")[0]}.pdf`,
               content: pdfBuffer,
             },
           ],
@@ -133,8 +170,8 @@ export async function GET(request: Request) {
 
         // Update last_sent_at
         await client.query(
-          "UPDATE subscriptions SET last_sent_at = NOW() WHERE email = $1",
-          [sub.email],
+          "UPDATE subscribers SET last_sent_at = NOW() WHERE id = $1",
+          [sub.id],
         );
 
         stats.sent++;

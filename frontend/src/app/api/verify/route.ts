@@ -14,9 +14,9 @@ export async function GET(request: Request) {
 
   const client = await pool.connect();
   try {
-    // Find subscription by token
+    // Find subscriber by token
     const result = await client.query(
-      "SELECT * FROM subscriptions WHERE verification_token = $1",
+      "SELECT * FROM subscribers WHERE verification_token = $1",
       [token],
     );
 
@@ -27,27 +27,39 @@ export async function GET(request: Request) {
       );
     }
 
-    const subscription = result.rows[0];
+    const subscriber = result.rows[0];
 
     // Update to verified
     await client.query(
-      "UPDATE subscriptions SET is_verified = TRUE, verification_token = NULL, updated_at = NOW() WHERE id = $1",
-      [subscription.id],
+      "UPDATE subscribers SET is_verified = TRUE, updated_at = NOW() WHERE id = $1",
+      [subscriber.id],
     );
+
+    // Get the most recently added city for context in the email/redirect
+    const cityResult = await client.query(
+      "SELECT city FROM subscriber_cities WHERE subscriber_id = $1 ORDER BY added_at DESC LIMIT 1",
+      [subscriber.id],
+    );
+    const initialCity = cityResult.rows[0]?.city || "your selected cities";
 
     // Send Welcome Email
     await resend.emails.send({
       from: "AQILYTICS <onboarding@resend.dev>",
-      to: subscription.email,
+      to: subscriber.email,
       subject: "Subscription Active: Daily AQI Reports",
       html: `
           <h1>Subscription Active!</h1>
-          <p>You are now verified. You will receive daily AQI reports for <strong>${subscription.city}</strong>.</p>
+          <p>You are now verified. You will receive daily AQI reports for <strong>${initialCity}</strong> (and other cities you add).</p>
         `,
     });
 
-    // Redirect to a success page or home
-    return NextResponse.redirect(new URL("/?verified=true", request.url));
+    // Redirect to the new success page
+    return NextResponse.redirect(
+      new URL(
+        `/subscription/confirmed?city=${encodeURIComponent(initialCity)}`,
+        request.url,
+      ),
+    );
   } catch (error) {
     console.error("Verification error:", error);
     return NextResponse.json({ error: "Verification failed" }, { status: 500 });

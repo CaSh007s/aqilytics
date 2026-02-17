@@ -97,117 +97,125 @@ const styles = StyleSheet.create({
   },
 });
 
-interface ReportProps {
+interface CityReportData {
   city: string;
   data: AQIResponse;
   forecast: ForecastResponse | null;
+}
+
+interface ReportProps {
+  reports: CityReportData[];
   date: string;
 }
 
-const AQIReportPDF = ({ city, data, forecast, date }: ReportProps) => (
+const AQIReportPDF = ({ reports, date }: ReportProps) => (
   <Document>
-    <Page size="A4" style={styles.page}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>{city}</Text>
-          <Text style={styles.subtitle}>
-            Daily Atmospheric Intelligence Report
-          </Text>
-        </View>
-        <View>
-          <Text style={{ fontSize: 10, color: "#94a3b8" }}>{date}</Text>
-        </View>
-      </View>
-
-      {/* Main AQI Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Current Status</Text>
-        <Text style={styles.mainMetric}>{data.current_aqi}</Text>
-        <Text style={styles.metricLabel}>{data.aqi_category}</Text>
-      </View>
-
-      {/* Pollutants Grid */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Pollutant Breakdown</Text>
-        <View style={styles.grid}>
-          {Object.entries(data.pollutants).map(([key, value]) => (
-            <View key={key} style={styles.card}>
-              <Text style={styles.cardLabel}>{key}</Text>
-              <Text style={styles.cardValue}>{value.toFixed(1)} µg/m³</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Weather Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Meteorological Conditions</Text>
-        <View style={styles.grid}>
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Temperature</Text>
-            <Text style={styles.cardValue}>{data.weather.temp}°C</Text>
+    {reports.map((report, index) => (
+      <Page key={index} size="A4" style={styles.page}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>{report.city}</Text>
+            <Text style={styles.subtitle}>
+              Daily Atmospheric Intelligence Report
+            </Text>
           </View>
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Humidity</Text>
-            <Text style={styles.cardValue}>{data.weather.humidity}%</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>Wind Speed</Text>
-            <Text style={styles.cardValue}>{data.weather.wind_speed} km/h</Text>
+          <View>
+            <Text style={{ fontSize: 10, color: "#94a3b8" }}>{date}</Text>
           </View>
         </View>
-      </View>
 
-      {/* Forecast Preview (Text based for now as charts in PDF are complex) */}
-      {forecast && (
+        {/* Main AQI Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>24-Hour Forecast Highlights</Text>
-          <View style={{ gap: 4 }}>
-            {forecast.forecast.slice(0, 4).map(
-              (
-                point,
-                i, // Show next 4 intervals (e.g., 4-6 hours)
-              ) => (
-                <View
-                  key={i}
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    paddingVertical: 2,
-                    borderBottomWidth: 0.5,
-                    borderBottomColor: "rgba(255,255,255,0.05)",
-                  }}
-                >
-                  <Text style={{ fontSize: 10, color: "#cbd5e1" }}>
-                    {new Date(point.time * 1000).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
-                  <Text style={{ fontSize: 10, fontWeight: "bold" }}>
-                    AQI: {point.aqi}
-                  </Text>
-                </View>
-              ),
-            )}
+          <Text style={styles.sectionTitle}>Current Status</Text>
+          <Text style={styles.mainMetric}>{report.data.current_aqi}</Text>
+          <Text style={styles.metricLabel}>{report.data.aqi_category}</Text>
+        </View>
+
+        {/* Pollutants Grid */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Pollutant Breakdown</Text>
+          <View style={styles.grid}>
+            {Object.entries(report.data.pollutants).map(([key, value]) => (
+              <View key={key} style={styles.card}>
+                <Text style={styles.cardLabel}>{key}</Text>
+                <Text style={styles.cardValue}>{value.toFixed(1)} µg/m³</Text>
+              </View>
+            ))}
           </View>
         </View>
-      )}
 
-      {/* Footer */}
-      <Text style={styles.footer}>
-        Generated by AQILYTICS automated delivery engine. Do not reply to this
-        email.
-      </Text>
-    </Page>
+        {/* Weather Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Meteorological Conditions</Text>
+          <View style={styles.grid}>
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Temperature</Text>
+              <Text style={styles.cardValue}>{report.data.weather.temp}°C</Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Humidity</Text>
+              <Text style={styles.cardValue}>
+                {report.data.weather.humidity}%
+              </Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>Wind Speed</Text>
+              <Text style={styles.cardValue}>
+                {report.data.weather.wind_speed} km/h
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Forecast Preview (Text based for now as charts in PDF are complex) */}
+        {report.forecast && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>24-Hour Forecast Highlights</Text>
+            <View style={{ gap: 4 }}>
+              {report.forecast.forecast.slice(0, 4).map(
+                (
+                  point,
+                  i, // Show next 4 intervals (e.g., 4-6 hours)
+                ) => (
+                  <View
+                    key={i}
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      paddingVertical: 2,
+                      borderBottomWidth: 0.5,
+                      borderBottomColor: "rgba(255,255,255,0.05)",
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, color: "#cbd5e1" }}>
+                      {new Date(point.time * 1000).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Text>
+                    <Text style={{ fontSize: 10, fontWeight: "bold" }}>
+                      AQI: {point.aqi}
+                    </Text>
+                  </View>
+                ),
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Footer */}
+        <Text style={styles.footer}>
+          Generated by AQILYTICS automated delivery engine. Do not reply to this
+          email.
+        </Text>
+      </Page>
+    ))}
   </Document>
 );
 
 export const generateReportPDF = async (
-  city: string,
-  data: AQIResponse,
-  forecast: ForecastResponse | null,
+  reports: CityReportData[],
 ): Promise<Buffer> => {
   const date = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -217,7 +225,7 @@ export const generateReportPDF = async (
   });
 
   const buffer = await renderToBuffer(
-    <AQIReportPDF city={city} data={data} forecast={forecast} date={date} />,
+    <AQIReportPDF reports={reports} date={date} />,
   );
 
   return buffer;
