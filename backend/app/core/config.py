@@ -11,9 +11,6 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     
-    # Supabase
-    SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
     # External API
     OPENWEATHER_API_KEY: str
@@ -25,9 +22,6 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     POSTGRES_PORT: str
 
-    # Redis
-    REDIS_HOST: str
-    REDIS_PORT: int
 
     # ML
     MODEL_PATH: str
