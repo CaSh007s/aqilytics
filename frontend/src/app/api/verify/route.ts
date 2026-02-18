@@ -50,6 +50,11 @@ export async function GET(request: Request) {
       html: `
           <h1>Subscription Active!</h1>
           <p>You are now verified. You will receive daily AQI reports for <strong>${initialCity}</strong> (and other cities you add).</p>
+          <p style="margin-top: 20px; font-size: 12px; color: #666;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/unsubscribe?token=${subscriber.verification_token}" style="color: #666; text-decoration: underline;">
+              Unsubscribe from these emails
+            </a>
+          </p>
         `,
     });
 
