@@ -43,13 +43,13 @@ export default function ScrollText() {
   });
 
   const paragraph =
-    "The air we breathe is invisible, but its impact is undeniable. Every year, millions of lives are silently affected by particulate matter that our eyes cannot see. AQILytics renders the invisible visible, transforming complex atmospheric data into a breath of clarity. We do not just measure the pollution; we predict its path, empowering you to protect what matters most.";
+    "The air we breathe is invisible, but its impact is undeniable. Every year, millions of lives are silently affected by particulate matter that our eyes cannot see. AQILYTICS renders the invisible visible, transforming complex atmospheric data into a breath of clarity. We do not just measure the pollution; we predict its path, empowering you to protect what matters most.";
 
   const words = paragraph.split(" ");
 
   return (
-    // The "Track" - 300vh tall to give us plenty of scroll room
-    <div ref={containerRef} className="h-[300vh] bg-slate-950 relative">
+    // The "Track" - 600vh tall to slow down the reveal significantly (previously 300vh)
+    <div ref={containerRef} className="h-[600vh] bg-slate-950 relative">
       {/* The "Stage" - Sticky frame that stays in view */}
       <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
         {/* Maximum width container for the text */}
