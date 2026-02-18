@@ -117,3 +117,29 @@ export const fetchForecast = async (
     throw error;
   }
 };
+
+export interface BatchAQIResponse {
+  city: string;
+  aqi: number;
+  category: string;
+  lat: number;
+  lon: number;
+}
+
+export const fetchBatchAQI = async (
+  cities: string[],
+): Promise<BatchAQIResponse[]> => {
+  try {
+    const response = await fetchWithRetry(`${API_URL}/aqi/batch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cities }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Batch API Error:", error);
+    throw error;
+  }
+};

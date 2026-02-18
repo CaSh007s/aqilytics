@@ -1,7 +1,16 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DottedMap from "dotted-map";
 import { motion } from "framer-motion";
+
+import { fetchBatchAQI } from "../../services/api";
+
+const getAQIColor = (aqi: number) => {
+  if (aqi <= 50) return { color: "bg-green-400", text: "text-green-400" };
+  if (aqi <= 100) return { color: "bg-yellow-400", text: "text-yellow-400" };
+  if (aqi <= 200) return { color: "bg-orange-500", text: "text-orange-500" };
+  return { color: "bg-red-500", text: "text-red-500" };
+};
 
 interface CityData {
   name: string;
@@ -120,6 +129,47 @@ const LEGEND_POSITIONS = [
 
 export default function DottedMapComponent() {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+  const [cities, setCities] = useState<CityData[]>(CITIES_DATA);
+
+  // Fetch Real Data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const cityNames = CITIES_DATA.map((c) => c.name);
+        // Only fetch if we have cities (optimization)
+        if (cityNames.length === 0) return;
+
+        const data = await fetchBatchAQI(cityNames);
+
+        // Merge real data with static coordinates
+        const updatedCities = CITIES_DATA.map((staticCity) => {
+          const realData = data.find((d) => d.city === staticCity.name);
+          if (realData) {
+            const style = getAQIColor(realData.aqi);
+            return {
+              ...staticCity,
+              aqi: realData.aqi,
+              color: style.color,
+              text: style.text,
+              // Optional: update coordinates if backend returns significantly different ones,
+              // but purely mainly reliance on static coords for map alignment is safer for this DottedMap library.
+            };
+          }
+          return staticCity;
+        });
+
+        setCities(updatedCities);
+      } catch (err) {
+        console.error("Failed to load map data", err);
+      }
+    };
+
+    loadData();
+    // Optional: Refresh every 5 minutes
+    const interval = setInterval(loadData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Fix: Generate map and projections once using useMemo.
   const { svgMap, projectedCities, mapSize } = useMemo(() => {
     const map = new DottedMap({ height: 60, grid: "diagonal" });
@@ -133,7 +183,7 @@ export default function DottedMapComponent() {
 
     // Project Cities using the Library's Logic
     // This ensures 100% perfect alignment with the dots
-    const projected = CITIES_DATA.map((city) => {
+    const projected = cities.map((city) => {
       const pin = map.getPin({ lat: city.lat, lng: city.lng });
       return {
         ...city,
@@ -148,7 +198,7 @@ export default function DottedMapComponent() {
       projectedCities: projected,
       mapSize: { width: map.image.width, height: map.image.height },
     };
-  }, []);
+  }, [cities]);
 
   // Legend State
   const [legendIndex, setLegendIndex] = useState(0);

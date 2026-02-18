@@ -13,7 +13,16 @@ class WeatherData(BaseModel):
 class AQIPredictionRequest(BaseModel):
     city: str
 
+class BatchAQIRequest(BaseModel):
+    cities: List[str]
+
 # --- Response ---
+class BatchAQIResponse(BaseModel):
+    city: str
+    aqi: float
+    category: str
+    lat: float
+    lon: float
 class AQIPredictionResponse(BaseModel):
     city: str
     country: str

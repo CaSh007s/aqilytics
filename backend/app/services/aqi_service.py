@@ -1,4 +1,5 @@
 import httpx
+import asyncio
 from app.core.config import settings
 from app.ml.predict import AQIPredictor
 from app.schemas import AQIPredictionResponse, AQIForecastResponse, ForecastPoint, AnalysisResponse
@@ -94,7 +95,10 @@ class AQIService:
             "current_aqi": round(predicted_aqi, 2),
             "aqi_category": category,
             "weather": weather_data,
-            "pollutants": pollutants
+            "weather": weather_data,
+            "pollutants": pollutants,
+            "lat": lat,
+            "lon": lon
         }
     
     async def get_forecast(self, city: str) -> AQIForecastResponse:
@@ -166,6 +170,30 @@ class AQIService:
         if aqi <= 300: return "Poor"
         if aqi <= 400: return "Very Poor"
         return "Severe"
+
+    async def get_batch_aqi(self, cities: list[str]) -> list[dict]:
+        async def fetch_safe(city):
+            try:
+                return await self.get_realtime_aqi(city=city)
+            except Exception as e:
+                print(f"Batch fetch error for {city}: {e}")
+                return None
+        
+        tasks = [fetch_safe(city) for city in cities]
+        results = await asyncio.gather(*tasks)
+        
+        # Filter failures and format response
+        valid_results = []
+        for res in results:
+            if res:
+                valid_results.append({
+                    "city": res["city"],
+                    "aqi": res["current_aqi"],
+                    "category": res["aqi_category"],
+                    "lat": res["lat"],
+                    "lon": res["lon"]
+                })
+        return valid_results
 
     # History methods disabled for open access version
     # async def save_analysis(self, user_id: str, data: dict): ...

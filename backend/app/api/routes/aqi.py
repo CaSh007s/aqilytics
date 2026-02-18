@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
+from typing import List
 from app.services.aqi_service import AQIService
-from app.schemas import AQIPredictionResponse, AQIForecastResponse
+from app.schemas import AQIPredictionResponse, AQIForecastResponse, BatchAQIRequest, BatchAQIResponse
 
 router = APIRouter()
 service = AQIService()
@@ -43,3 +44,10 @@ async def get_aqi_forecast(city: str):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/batch", response_model=List[BatchAQIResponse])
+async def get_batch_aqi(request: BatchAQIRequest):
+    """
+    Get AQI for multiple cities.
+    """
+    return await service.get_batch_aqi(request.cities)
