@@ -10,22 +10,30 @@ class AQIService:
         self.weather_url = "https://api.openweathermap.org/data/2.5/weather"
         self.pollution_url = "https://api.openweathermap.org/data/2.5/air_pollution"
     
-    async def get_realtime_aqi(self, city: str) -> dict:
+    async def get_realtime_aqi(self, city: str = None, lat: float = None, lon: float = None) -> dict:
         weather_data = {}
         pollutants = {}
         
         async with httpx.AsyncClient() as client:
             # --- STEP 1: Get Weather & Coordinates ---
-            w_response = await client.get(self.weather_url, params={
-                "q": city,
+            params = {
                 "appid": settings.OPENWEATHER_API_KEY,
                 "units": "metric"
-            })
+            }
+            if lat is not None and lon is not None:
+                params["lat"] = lat
+                params["lon"] = lon
+            elif city:
+                params["q"] = city
+            else:
+                 raise ValueError("City or Coordinates required")
+
+            w_response = await client.get(self.weather_url, params=params)
             
             # STRICT CHECK: If city is not found (404), STOP immediately.
             if w_response.status_code == 404:
-                print(f"❌ City '{city}' not found.")
-                raise ValueError(f"City '{city}' not found.")
+                print(f"❌ Location not found.")
+                raise ValueError(f"Location not found.")
 
             # Check for API Key issues (401)
             if w_response.status_code == 401:
