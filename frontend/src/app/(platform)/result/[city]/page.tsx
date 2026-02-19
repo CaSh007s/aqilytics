@@ -84,12 +84,6 @@ export default function ResultPage({
     setViewMode((prev) => (prev === "dashboard" ? "risk" : "dashboard"));
   };
 
-  const handleReportClick = () => {
-    // Trigger server-side PDF generation and download
-    const url = `/api/report/download?city=${encodeURIComponent(city)}`;
-    window.location.href = url;
-  };
-
   if (loading || !data) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -122,7 +116,6 @@ export default function ResultPage({
               onSelectPollutant={setActivePollutant}
               data={data}
               onRiskClick={handleRiskToggle}
-              onReportClick={handleReportClick}
             />
           </div>
 

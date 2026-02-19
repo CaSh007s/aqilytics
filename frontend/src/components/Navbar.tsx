@@ -27,7 +27,6 @@ interface NavbarProps {
   onSelectPollutant?: (key: string) => void;
   data?: AQIResponse | null;
   onRiskClick?: () => void;
-  onReportClick?: () => void;
 }
 
 const pollutantItems = [
@@ -65,7 +64,6 @@ export default function Navbar({
   onSelectPollutant,
   data,
   onRiskClick,
-  onReportClick,
 }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -73,16 +71,8 @@ export default function Navbar({
   /* State for Subscription Modal */
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
-  const handleReportDownload = async () => {
-    // 1. Trigger the actual download (passed from parent)
-    if (onReportClick) {
-      await onReportClick();
-    }
-
-    // 2. Queue the modal (non-blocking)
-    setTimeout(() => {
-      setShowSubscriptionModal(true);
-    }, 500); // reduced delay as report generation takes time
+  const handleReportDownload = () => {
+    setShowSubscriptionModal(true);
   };
 
   const handleLogoClick = () => {

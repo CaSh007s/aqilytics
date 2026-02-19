@@ -200,7 +200,7 @@ export default function SubscriptionModal({
                       className="inline-flex items-center gap-2 text-xs text-sky-400 hover:text-sky-300 transition-colors uppercase tracking-wider font-semibold"
                     >
                       <Download size={12} />
-                      <span>Download Report Manually</span>
+                      <span>Download Full PDF Report</span>
                     </button>
                   </div>
                 </>
