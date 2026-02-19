@@ -46,7 +46,10 @@ export async function generateFullCityReport(
 ): Promise<FullReportAnalysis> {
   // 1. Construct the monolithic prompt
   const pollutantList = Object.entries(pollutants)
-    .map(([key, val]) => `${key}: ${val} µg/m³`)
+    .map(([key, val]) => {
+      const name = getDisplayName(key);
+      return `${name}: ${val} µg/m³`;
+    })
     .join("\n");
 
   const prompt = `
@@ -86,7 +89,7 @@ NO2:
 SO2:
 <text>
 
-O3:
+Ozone:
 <text>
 
 NH3:
@@ -198,13 +201,13 @@ function getDisplayName(key: string): string {
   const map: Record<string, string> = {
     pm2_5: "PM2.5",
     pm10: "PM10",
-    no2: "NO2", // Model might prefer NO2 over NO₂ for standard ASCII
-    so2: "SO2",
-    o3: "O3", // or Ozone
-    nh3: "NH3",
+    no2: "NO2", // ASCII safe for PDF
+    so2: "SO2", // ASCII safe for PDF
+    o3: "Ozone",
+    nh3: "NH3", // ASCII safe for PDF
     co: "CO",
     // Handle variants
-    ozone: "O3",
+    ozone: "Ozone",
   };
   return map[key.toLowerCase()] || key.toUpperCase();
 }

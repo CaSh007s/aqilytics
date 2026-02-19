@@ -126,14 +126,17 @@ interface ReportProps {
 const displayNameMap: Record<string, string> = {
   pm2_5: "PM2.5",
   pm10: "PM10",
-  no2: "NO₂",
-  so2: "SO₂",
+  no2: "NO2", // ASCII safe
+  so2: "SO2", // ASCII safe
   o3: "Ozone",
-  nh3: "NH₃",
+  ozone: "Ozone",
+  nh3: "NH3", // ASCII safe
   co: "CO",
 };
 
-const snapshotPollutants = ["nh3", "co"];
+// Classification
+const PRIMARY_POLLUTANTS = ["pm2_5", "pm10", "no2", "o3", "ozone"];
+const SECONDARY_POLLUTANTS = ["nh3", "so2", "co"]; // Consolidated indicators
 
 function findDominantPollutant(
   pollutants: Record<string, number>,
@@ -152,92 +155,148 @@ const AQIReportPDF = ({ reports, date }: ReportProps) => (
       const [dominantKey, dominantValue] = findDominantPollutant(pollutants);
       const dominantName = displayNameMap[dominantKey] ?? dominantKey;
 
+      // Classify pollutants present in this report
+      const presentPrimary = Object.keys(pollutants).filter((k) =>
+        PRIMARY_POLLUTANTS.includes(k.toLowerCase()),
+      );
+      const presentSecondary = Object.keys(pollutants).filter((k) =>
+        SECONDARY_POLLUTANTS.includes(k.toLowerCase()),
+      );
+
       return (
-        <Page key={index} size="A4" style={styles.page}>
-          {/* HEADER */}
-          <View style={styles.header}>
-            <Text style={styles.city}>{report.city}</Text>
-            <Text style={styles.subtitle}>
-              Atmospheric Intelligence Report • {date}
-            </Text>
+        <React.Fragment key={index}>
+          {/* PAGE 1: EXECUTIVE DASHBOARD */}
+          <Page size="A4" style={styles.page}>
+            {/* HEADER */}
+            <View style={styles.header}>
+              <Text style={styles.city}>{report.city}</Text>
+              <Text style={styles.subtitle}>
+                Atmospheric Intelligence Report • {date}
+              </Text>
 
-            <View style={styles.riskBlock}>
-              <Text style={styles.riskTitle}>
-                AQI Classification: {report.data.aqi_category}
-              </Text>
-              <Text style={styles.text}>
-                Dominant pollutant driving air quality is {dominantName} (
-                {dominantValue.toFixed(1)} µg/m³).
-              </Text>
-            </View>
-          </View>
-
-          {/* METRIC BAND */}
-          <View style={styles.metricBand}>
-            <View style={styles.metricBox}>
-              <Text style={styles.metricValue}>
-                {report.data.current_aqi.toFixed(0)}
-              </Text>
-              <Text style={styles.metricLabel}>AQI</Text>
+              <View style={styles.riskBlock}>
+                <Text style={styles.riskTitle}>
+                  AQI Classification: {report.data.aqi_category}
+                </Text>
+                <Text style={styles.text}>
+                  Dominant pollutant driving air quality is {dominantName} (
+                  {dominantValue.toFixed(1)} µg/m³).
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.metricBox}>
-              <Text style={styles.metricValue}>
-                {Object.keys(pollutants).length}
-              </Text>
-              <Text style={styles.metricLabel}>Pollutants Measured</Text>
+            {/* METRIC BAND */}
+            <View style={styles.metricBand}>
+              <View style={styles.metricBox}>
+                <Text style={styles.metricValue}>
+                  {report.data.current_aqi.toFixed(0)}
+                </Text>
+                <Text style={styles.metricLabel}>AQI</Text>
+              </View>
+              <View style={styles.metricBox}>
+                <Text style={styles.metricValue}>
+                  {Object.keys(pollutants).length}
+                </Text>
+                <Text style={styles.metricLabel}>Pollutants Measured</Text>
+              </View>
+              <View style={styles.metricBox}>
+                <Text style={styles.metricValue}>
+                  {report.forecast ? "Yes" : "No"}
+                </Text>
+                <Text style={styles.metricLabel}>Forecast Model</Text>
+              </View>
             </View>
 
-            <View style={styles.metricBox}>
-              <Text style={styles.metricValue}>
-                {report.forecast ? "Yes" : "No"}
-              </Text>
-              <Text style={styles.metricLabel}>Forecast Model</Text>
+            {/* EXECUTIVE SUMMARY */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Executive Summary</Text>
+              <Text style={styles.text}>{report.summary}</Text>
             </View>
-          </View>
+          </Page>
 
-          {/* EXECUTIVE SUMMARY */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Executive Summary</Text>
-            <Text style={styles.text}>{report.summary}</Text>
-          </View>
-
-          {/* POLLUTANT SECTIONS */}
-          {Object.entries(pollutants).map(([rawKey, val]) => {
-            const value = val as number;
+          {/* PAGE 2..N: PRIMARY POLLUTANT BREAKDOWN (One per page) */}
+          {presentPrimary.map((rawKey) => {
             const key = rawKey.toLowerCase();
+            const value = pollutants[rawKey];
             const name = displayNameMap[key] ?? rawKey;
-            const isSnapshot = snapshotPollutants.includes(key);
+
+            // Handle "ozone" vs "o3" normalization for chart lookup
+            // Chart generator likely uses rawKey, but let's be safe.
+            // ai-analyst text is stored under 'name' (e.g. "Ozone")
+            const analysisText =
+              report.pollutantAnalysis?.[name] || "Analysis unavailable.";
 
             return (
-              <View key={key} style={styles.section} break={false}>
-                <Text style={styles.sectionTitle}>{name} Analysis</Text>
-                <Text style={styles.text}>
-                  {report.pollutantAnalysis?.[name]}
-                </Text>
-                <Text style={styles.text}>
-                  Current concentration: {value.toFixed(2)} µg/m³.
-                </Text>
+              <Page key={key} size="A4" style={styles.page}>
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>{name} Analysis</Text>
+                  <Text style={styles.text}>
+                    Current Concentration: {value.toFixed(2)} µg/m³
+                  </Text>
 
-                {!isSnapshot && report.charts[name] && (
-                  <View style={styles.chartContainer}>
-                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                    <Image
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      src={Buffer.from(report.charts[name]) as any}
-                      style={styles.chartImage}
-                    />
-                  </View>
-                )}
-              </View>
+                  <Text style={styles.text}>{analysisText}</Text>
+
+                  {/* Forecast Chart */}
+                  {report.charts[name] && (
+                    <View style={styles.chartContainer}>
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                      <Image
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        src={Buffer.from(report.charts[name]) as any}
+                        style={styles.chartImage}
+                      />
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.footer} fixed>
+                  AQILYTICS • {name} Measurement • {date}
+                </Text>
+              </Page>
             );
           })}
 
-          {/* FOOTER */}
-          <Text style={styles.footer} fixed>
-            AQILYTICS Automated Atmospheric Assessment • {date}
-          </Text>
-        </Page>
+          {/* FINAL PAGE (or Section): SECONDARY INDICATORS */}
+          {presentSecondary.length > 0 && (
+            <Page size="A4" style={styles.page}>
+              <View style={styles.header}>
+                <Text style={styles.city}>Secondary Indicators</Text>
+                <Text style={styles.subtitle}>
+                  Supporting Atmospheric Context
+                </Text>
+              </View>
+
+              <View style={styles.section}>
+                {presentSecondary.map((rawKey) => {
+                  const key = rawKey.toLowerCase();
+                  const value = pollutants[rawKey];
+                  const name = displayNameMap[key] ?? rawKey;
+                  const analysisText =
+                    report.pollutantAnalysis?.[name] ||
+                    "Interpretation unavailable.";
+
+                  return (
+                    <View key={key} style={{ marginBottom: 20 }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "bold",
+                          marginBottom: 4,
+                        }}
+                      >
+                        {name} ({value.toFixed(2)} µg/m³)
+                      </Text>
+                      <Text style={styles.text}>{analysisText}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+
+              <Text style={styles.footer} fixed>
+                AQILYTICS • Supporting Data • {date}
+              </Text>
+            </Page>
+          )}
+        </React.Fragment>
       );
     })}
   </Document>
@@ -287,13 +346,13 @@ export const generateReportPDF = async (
     await delay(200); // Small throttle just in case of multiple reports
 
     // 2. Pollutants Loop (Charts Only)
-    // We strictly await chart generation to prevent any potential overload on chart API if many pollutants
-    for (const [rawKey, val] of Object.entries(pollutants)) {
+    for (const [rawKey] of Object.entries(pollutants)) {
       const key = rawKey.toLowerCase();
       const name = displayNameMap[key] ?? rawKey;
-      const isSnapshot = snapshotPollutants.includes(key);
+      const isSecondary = SECONDARY_POLLUTANTS.includes(key);
 
-      if (!isSnapshot && report.forecast) {
+      // Only generate charts for Primary pollutants
+      if (!isSecondary && report.forecast) {
         try {
           // Use rawKey for data lookup, name for storage
           charts[name] = await generatePollutantChart(
