@@ -5,102 +5,115 @@ import {
   Text,
   View,
   StyleSheet,
+  Image,
   renderToBuffer,
 } from "@react-pdf/renderer";
 import { AQIResponse, ForecastResponse } from "./api";
+import { generatePollutantChart } from "./chart-generator";
+import { generateFullCityReport } from "./ai-analyst";
 
-// Register custom fonts (optional, using standard fonts for now)
-// Font.register({ family: 'Inter', src: '...' });
+/* ---------------------- STYLES ---------------------- */
 
 const styles = StyleSheet.create({
   page: {
-    flexDirection: "column",
-    backgroundColor: "#020617", // slate-950
-    color: "white",
-    padding: 30,
+    padding: 56, // ~20mm real A4 margin
     fontFamily: "Helvetica",
+    color: "#1e293b",
+    backgroundColor: "#ffffff",
   },
+
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    marginBottom: 18,
+    borderBottomWidth: 2, // React-pdf doesn't support "2 solid #..." shorthand fully same as web css usually
+    borderBottomColor: "#e2e8f0",
+    borderBottomStyle: "solid",
     paddingBottom: 10,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "heavy",
-    textTransform: "uppercase",
-    letterSpacing: 2,
-  },
+
+  city: { fontSize: 26, fontWeight: "bold" },
+
   subtitle: {
-    fontSize: 10,
-    color: "#94a3b8", // slate-400
+    fontSize: 11,
+    color: "#64748b",
     marginTop: 4,
   },
-  section: {
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 8,
+
+  riskBlock: {
+    marginTop: 14,
+    padding: 12,
+    backgroundColor: "#fef3c7",
+    borderWidth: 1,
+    borderColor: "#f59e0b",
+    borderStyle: "solid",
+    borderRadius: 6,
   },
-  sectionTitle: {
-    fontSize: 12,
-    color: "#94a3b8",
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  mainMetric: {
-    fontSize: 48,
-    fontWeight: "bold",
-    color: "#38bdf8", // sky-400
-    textAlign: "center",
-    marginVertical: 10,
-  },
-  metricLabel: {
-    fontSize: 12,
-    textAlign: "center",
-    color: "#e2e8f0",
-  },
-  grid: {
+
+  riskTitle: { fontSize: 12, fontWeight: "bold", marginBottom: 4 },
+
+  metricBand: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+    justifyContent: "space-between",
+    marginVertical: 16,
+    padding: 14,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 6,
   },
-  card: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    borderRadius: 4,
-    minWidth: "30%",
-  },
-  cardLabel: {
-    fontSize: 8,
-    color: "#94a3b8",
-    marginBottom: 4,
-  },
-  cardValue: {
+
+  metricBox: { alignItems: "center", width: "30%" },
+
+  metricValue: { fontSize: 22, fontWeight: "bold", color: "#0284c7" },
+
+  metricLabel: { fontSize: 9, color: "#64748b" },
+
+  section: { marginTop: 18 },
+
+  sectionTitle: {
     fontSize: 14,
     fontWeight: "bold",
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderColor: "#e5e7eb",
+    borderStyle: "solid",
+    paddingBottom: 4,
   },
+
+  text: {
+    fontSize: 11,
+    lineHeight: 1.5,
+    marginBottom: 10,
+  },
+
+  chartContainer: {
+    marginTop: 8,
+    marginBottom: 18,
+  },
+
+  chartImage: {
+    width: "100%",
+    height: 260,
+    objectFit: "contain",
+  },
+
   footer: {
     position: "absolute",
     bottom: 30,
-    left: 30,
-    right: 30,
-    textAlign: "center",
+    left: 56,
+    right: 56,
     fontSize: 8,
-    color: "#64748b",
+    textAlign: "center",
+    color: "#94a3b8",
   },
 });
+
+/* ---------------------- TYPES ---------------------- */
 
 interface CityReportData {
   city: string;
   data: AQIResponse;
   forecast: ForecastResponse | null;
+  charts: Record<string, ArrayBuffer>;
+  summary?: string;
+  pollutantAnalysis?: Record<string, string>;
 }
 
 interface ReportProps {
@@ -108,125 +121,195 @@ interface ReportProps {
   date: string;
 }
 
+/* ---------------------- HELPERS ---------------------- */
+
+const displayNameMap: Record<string, string> = {
+  pm2_5: "PM2.5",
+  pm10: "PM10",
+  no2: "NO₂",
+  so2: "SO₂",
+  o3: "Ozone",
+  nh3: "NH₃",
+  co: "CO",
+};
+
+const snapshotPollutants = ["nh3", "co"];
+
+function findDominantPollutant(
+  pollutants: Record<string, number>,
+): [string, number] {
+  const sorted = Object.entries(pollutants).sort((a, b) => b[1] - a[1]);
+  if (sorted.length === 0) return ["Unknown", 0];
+  return sorted[0];
+}
+
+/* ---------------------- PDF COMPONENT ---------------------- */
+
 const AQIReportPDF = ({ reports, date }: ReportProps) => (
   <Document>
-    {reports.map((report, index) => (
-      <Page key={index} size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>{report.city}</Text>
+    {reports.map((report, index) => {
+      const pollutants = report.data.pollutants as Record<string, number>;
+      const [dominantKey, dominantValue] = findDominantPollutant(pollutants);
+      const dominantName = displayNameMap[dominantKey] ?? dominantKey;
+
+      return (
+        <Page key={index} size="A4" style={styles.page}>
+          {/* HEADER */}
+          <View style={styles.header}>
+            <Text style={styles.city}>{report.city}</Text>
             <Text style={styles.subtitle}>
-              Daily Atmospheric Intelligence Report
+              Atmospheric Intelligence Report • {date}
             </Text>
-          </View>
-          <View>
-            <Text style={{ fontSize: 10, color: "#94a3b8" }}>{date}</Text>
-          </View>
-        </View>
 
-        {/* Main AQI Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Current Status</Text>
-          <Text style={styles.mainMetric}>{report.data.current_aqi}</Text>
-          <Text style={styles.metricLabel}>{report.data.aqi_category}</Text>
-        </View>
-
-        {/* Pollutants Grid */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pollutant Breakdown</Text>
-          <View style={styles.grid}>
-            {Object.entries(report.data.pollutants).map(([key, value]) => (
-              <View key={key} style={styles.card}>
-                <Text style={styles.cardLabel}>{key}</Text>
-                <Text style={styles.cardValue}>{value.toFixed(1)} µg/m³</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Weather Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Meteorological Conditions</Text>
-          <View style={styles.grid}>
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Temperature</Text>
-              <Text style={styles.cardValue}>{report.data.weather.temp}°C</Text>
-            </View>
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Humidity</Text>
-              <Text style={styles.cardValue}>
-                {report.data.weather.humidity}%
+            <View style={styles.riskBlock}>
+              <Text style={styles.riskTitle}>
+                AQI Classification: {report.data.aqi_category}
               </Text>
-            </View>
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>Wind Speed</Text>
-              <Text style={styles.cardValue}>
-                {report.data.weather.wind_speed} km/h
+              <Text style={styles.text}>
+                Dominant pollutant driving air quality is {dominantName} (
+                {dominantValue.toFixed(1)} µg/m³).
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* Forecast Preview (Text based for now as charts in PDF are complex) */}
-        {report.forecast && (
+          {/* METRIC BAND */}
+          <View style={styles.metricBand}>
+            <View style={styles.metricBox}>
+              <Text style={styles.metricValue}>
+                {report.data.current_aqi.toFixed(0)}
+              </Text>
+              <Text style={styles.metricLabel}>AQI</Text>
+            </View>
+
+            <View style={styles.metricBox}>
+              <Text style={styles.metricValue}>
+                {Object.keys(pollutants).length}
+              </Text>
+              <Text style={styles.metricLabel}>Pollutants Measured</Text>
+            </View>
+
+            <View style={styles.metricBox}>
+              <Text style={styles.metricValue}>
+                {report.forecast ? "Yes" : "No"}
+              </Text>
+              <Text style={styles.metricLabel}>Forecast Model</Text>
+            </View>
+          </View>
+
+          {/* EXECUTIVE SUMMARY */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>24-Hour Forecast Highlights</Text>
-            <View style={{ gap: 4 }}>
-              {report.forecast.forecast.slice(0, 4).map(
-                (
-                  point,
-                  i, // Show next 4 intervals (e.g., 4-6 hours)
-                ) => (
-                  <View
-                    key={i}
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      paddingVertical: 2,
-                      borderBottomWidth: 0.5,
-                      borderBottomColor: "rgba(255,255,255,0.05)",
-                    }}
-                  >
-                    <Text style={{ fontSize: 10, color: "#cbd5e1" }}>
-                      {new Date(point.time * 1000).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                    <Text style={{ fontSize: 10, fontWeight: "bold" }}>
-                      AQI: {point.aqi}
-                    </Text>
-                  </View>
-                ),
-              )}
-            </View>
+            <Text style={styles.sectionTitle}>Executive Summary</Text>
+            <Text style={styles.text}>{report.summary}</Text>
           </View>
-        )}
 
-        {/* Footer */}
-        <Text style={styles.footer}>
-          Generated by AQILYTICS automated delivery engine. Do not reply to this
-          email.
-        </Text>
-      </Page>
-    ))}
+          {/* POLLUTANT SECTIONS */}
+          {Object.entries(pollutants).map(([rawKey, val]) => {
+            const value = val as number;
+            const key = rawKey.toLowerCase();
+            const name = displayNameMap[key] ?? rawKey;
+            const isSnapshot = snapshotPollutants.includes(key);
+
+            return (
+              <View key={key} style={styles.section} break={false}>
+                <Text style={styles.sectionTitle}>{name} Analysis</Text>
+                <Text style={styles.text}>
+                  {report.pollutantAnalysis?.[name]}
+                </Text>
+                <Text style={styles.text}>
+                  Current concentration: {value.toFixed(2)} µg/m³.
+                </Text>
+
+                {!isSnapshot && report.charts[name] && (
+                  <View style={styles.chartContainer}>
+                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                    <Image
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      src={Buffer.from(report.charts[name]) as any}
+                      style={styles.chartImage}
+                    />
+                  </View>
+                )}
+              </View>
+            );
+          })}
+
+          {/* FOOTER */}
+          <Text style={styles.footer} fixed>
+            AQILYTICS Automated Atmospheric Assessment • {date}
+          </Text>
+        </Page>
+      );
+    })}
   </Document>
 );
 
+/* ---------------------- DATA PREPARATION ---------------------- */
+
+type InputReportData = Omit<
+  CityReportData,
+  "charts" | "summary" | "pollutantAnalysis"
+>;
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const generateReportPDF = async (
-  reports: CityReportData[],
+  reports: InputReportData[],
 ): Promise<Buffer> => {
-  const date = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const date = new Date().toLocaleDateString();
+  const reportsWithContent: CityReportData[] = [];
 
-  const buffer = await renderToBuffer(
-    <AQIReportPDF reports={reports} date={date} />,
+  // Serialize reports processing
+  for (const report of reports) {
+    const charts: Record<string, ArrayBuffer> = {};
+    const pollutants = report.data.pollutants as Record<string, number>;
+
+    // 1. Single AI Call for Full Report Analysis
+    let aiAnalysisResult;
+    try {
+      aiAnalysisResult = await generateFullCityReport(
+        report.city,
+        report.data.current_aqi,
+        report.data.aqi_category,
+        pollutants,
+      );
+    } catch (e) {
+      console.error("AI Full Report Gen failed", e);
+      aiAnalysisResult = {
+        active_summary: "Summary unavailable.",
+        pollutants: {},
+      };
+    }
+
+    // Unpack AI results
+    const summary = aiAnalysisResult.active_summary;
+    const pollutantAnalysis = aiAnalysisResult.pollutants;
+
+    await delay(200); // Small throttle just in case of multiple reports
+
+    // 2. Pollutants Loop (Charts Only)
+    // We strictly await chart generation to prevent any potential overload on chart API if many pollutants
+    for (const [rawKey, val] of Object.entries(pollutants)) {
+      const key = rawKey.toLowerCase();
+      const name = displayNameMap[key] ?? rawKey;
+      const isSnapshot = snapshotPollutants.includes(key);
+
+      if (!isSnapshot && report.forecast) {
+        try {
+          // Use rawKey for data lookup, name for storage
+          charts[name] = await generatePollutantChart(
+            rawKey,
+            report.forecast.forecast,
+          );
+        } catch (e) {
+          console.error(`Chart gen failed for ${name} (${rawKey})`, e);
+        }
+      }
+    }
+
+    reportsWithContent.push({ ...report, summary, charts, pollutantAnalysis });
+  }
+
+  return await renderToBuffer(
+    <AQIReportPDF reports={reportsWithContent} date={date} />,
   );
-
-  return buffer;
 };

@@ -1,5 +1,6 @@
 
 # --- Dependencies (The 23k Culprits) ---
+.venv/
 node_modules/
 venv/
 __pycache__/

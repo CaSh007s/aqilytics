@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, CheckCircle, Loader2 } from "lucide-react";
+import { X, Mail, CheckCircle, Loader2, Download } from "lucide-react";
 
 interface SubscriptionModalProps {
   isOpen: boolean;
@@ -64,7 +64,7 @@ export default function SubscriptionModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 sm:px-0">
+        <div className="fixed inset-0 z-100 flex items-center justify-center px-4 sm:px-0">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -186,6 +186,23 @@ export default function SubscriptionModal({
                   <p className="text-xs text-center text-slate-500 mt-4">
                     Unsubscribe at any time. No spam.
                   </p>
+
+                  {/* Manual Download Option */}
+                  <div className="mt-6 pt-4 border-t border-white/10 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `/api/report/download?city=${encodeURIComponent(
+                          city,
+                        )}`;
+                        window.location.href = url;
+                      }}
+                      className="inline-flex items-center gap-2 text-xs text-sky-400 hover:text-sky-300 transition-colors uppercase tracking-wider font-semibold"
+                    >
+                      <Download size={12} />
+                      <span>Download Report Manually</span>
+                    </button>
+                  </div>
                 </>
               )}
             </div>
