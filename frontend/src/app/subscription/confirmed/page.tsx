@@ -6,7 +6,9 @@ import { CheckCircle, ArrowLeft } from "lucide-react";
 import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground";
 import Navbar from "@/components/Navbar";
 
-export default function SubscriptionConfirmedPage() {
+import { Suspense } from "react";
+
+function SubscriptionConfirmedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const city = searchParams.get("city") || "your city";
@@ -89,5 +91,19 @@ export default function SubscriptionConfirmedPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function SubscriptionConfirmedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+          Loading...
+        </div>
+      }
+    >
+      <SubscriptionConfirmedContent />
+    </Suspense>
   );
 }

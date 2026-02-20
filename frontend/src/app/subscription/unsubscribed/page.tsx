@@ -8,7 +8,9 @@ import AtmosphericBackground from "@/components/dashboard/AtmosphericBackground"
 import Navbar from "@/components/Navbar";
 import SubscriptionModal from "@/components/SubscriptionModal";
 
-export default function UnsubscribedPage() {
+import { Suspense } from "react";
+
+function UnsubscribedContent() {
   const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
 
@@ -70,5 +72,19 @@ export default function UnsubscribedPage() {
         city={city || "London"} // Default or passed city
       />
     </div>
+  );
+}
+
+export default function UnsubscribedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+          Loading...
+        </div>
+      }
+    >
+      <UnsubscribedContent />
+    </Suspense>
   );
 }
