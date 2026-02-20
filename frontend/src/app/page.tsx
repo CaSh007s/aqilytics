@@ -113,7 +113,7 @@ export default function LandingPage() {
           {/* Column 1: Identity */}
           <div className="space-y-4">
             <h3 className="text-xl font-thin tracking-widest text-white">
-              AQILytics
+              AQILYTICS
             </h3>
             <p className="text-sm text-slate-500 leading-relaxed">
               Atmospheric intelligence for the modern era. Predicting the unseen
@@ -137,19 +137,25 @@ export default function LandingPage() {
             </h4>
             <div className="space-y-3">
               <a
-                href="#"
+                href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
+                target="_blank"
+                rel="noreferrer noopener"
                 className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
               >
                 <FileText className="w-3 h-3" /> WHO Air Quality Guidelines
               </a>
               <a
-                href="#"
+                href="https://www.who.int/tools/health-impact-assessment"
+                target="_blank"
+                rel="noreferrer noopener"
                 className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
               >
                 <FileText className="w-3 h-3" /> Health Impact Assessment
               </a>
               <a
-                href="#"
+                href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
+                target="_blank"
+                rel="noreferrer noopener"
                 className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
               >
                 <FileText className="w-3 h-3" /> Particulate Matter Risks
@@ -163,18 +169,18 @@ export default function LandingPage() {
               Project
             </h4>
             <div className="space-y-3">
-              <a
-                href="#"
+              <Link
+                href="/methodology"
                 className="block text-sm text-slate-400 hover:text-white transition-colors"
               >
                 Methodology
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                href="/api-status"
                 className="block text-sm text-slate-400 hover:text-white transition-colors"
               >
                 API Status
-              </a>
+              </Link>
               <p className="text-xs text-slate-600 mt-8">
                 Designed by Kalash Pratap Gaur
               </p>
