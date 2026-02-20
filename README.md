@@ -11,16 +11,32 @@
 
   <p>
     <!-- Technology Stack Badges -->
-    <img src="https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
-    <img src="https://img.shields.io/badge/FastAPI_Python-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
-    <img src="https://img.shields.io/badge/AI_Gemini_2.5-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini" />
-    <img src="https://img.shields.io/badge/ML_XGBoost-111111?style=for-the-badge" alt="XGBoost" />
-    <img src="https://img.shields.io/badge/Database_PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <a href="https://nextjs.org/docs" target="_blank" rel="noreferrer">
+      <img src="https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+    </a>
+    <a href="https://fastapi.tiangolo.com/" target="_blank" rel="noreferrer">
+      <img src="https://img.shields.io/badge/FastAPI_Python-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+    </a>
+    <a href="https://ai.google.dev/docs" target="_blank" rel="noreferrer">
+      <img src="https://img.shields.io/badge/AI_Gemini_2.5-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini" />
+    </a>
+    <a href="https://xgboost.readthedocs.io/en/stable/" target="_blank" rel="noreferrer">
+      <img src="https://img.shields.io/badge/ML_XGBoost-111111?style=for-the-badge" alt="XGBoost" />
+    </a>
+    <a href="https://www.postgresql.org/docs/" target="_blank" rel="noreferrer">
+      <img src="https://img.shields.io/badge/Database_PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    </a>
   </p>
 
   <p>
     <a href="https://github.com/CaSh007s/aqilytics">View Repository on GitHub</a>
   </p>
+
+  <br />
+  <!-- Hero Images at the top -->
+  <a href="docs/screenshots/landing-desktop.png">
+    <img src="docs/screenshots/landing-desktop.png" alt="AQILYTICS Landing Page" width="800" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);" />
+  </a>
 </div>
 
 <hr />
@@ -81,75 +97,70 @@
 <h2>📊 Application Workflow</h2>
 <p>Below is the architectural workflow detailing how users interact with AQILYTICS from the landing page to generating reports.</p>
 
-```mermaid
-flowchart TD
-    %% Define Styles
-    classDef frontend fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
-    classDef backend fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
-    classDef ai fill:#4a044e,stroke:#d946ef,stroke-width:2px,color:#fff
-    classDef action fill:#1e1e1e,stroke:#f59e0b,stroke-width:2px,color:#fff
-
-    %% Flowchart nodes
-    A([User visits Landing Page]):::frontend --> B{Clicks 'Get Started'}
-    B --> C([Agent Page / Search]):::frontend
-    C -->|Searches City or Selects History| D([Result Page: /result/[city]]):::frontend
-
-    D --> E[Fetch AQI Data API]:::backend
-    E --> F[ML Predictive Model - XGBoost]:::backend
-    F --> G[Return Real-time & Forecast Data]:::backend
-    G --> H[Display Metrics & Charts]:::frontend
-
-    D --> I[Generate AI Report]:::ai
-    I --> J[Google Gemini SDK]:::ai
-    J --> K[Display Summary & Insights]:::frontend
-
-    D --> L{User Actions}:::action
-    L --> M[Download PDF Report]:::action
-    L --> N[Subscribe to Daily Emails]:::action
-
-    M --> O[Generate PDF via React-PDF]:::frontend
-    N --> P[Save to DB & Send Verification]:::backend
-```
-
-<h2>📸 Screenshots</h2>
-<p>
-  <i>(Note for contributors: Please place the following screenshots in the <code>docs/screenshots/</code> directory. Update the file paths below once added.)</i>
+<p align="center">
+  <img src="frontend/public/architecture.svg" alt="AQILYTICS Architecture Workflow" width="800" />
 </p>
-<ul>
-  <li>
-    <b>1. Landing Page (Desktop & Mobile):</b> <br/>
-    <i>Capture the interactive globe/dotted map and the "Scroll to Explore" droplets canvas.</i><br/>
-    <img src="docs/screenshots/landing-desktop.png" alt="Landing Page Desktop" width="600" />
-    <img src="docs/screenshots/landing-mobile.png" alt="Landing Page Mobile" width="200" />
-  </li>
-  <li>
-    <b>2. Agent Search Page:</b><br/>
-    <i>Capture the AQILYTICS glowing text, the search bar, and the history section.</i><br/>
-    <img src="docs/screenshots/agent-search.png" alt="Agent Search Page" width="600" />
-  </li>
-  <li>
-    <b>3. Result Dashboard (Desktop & Mobile):</b><br/>
-    <i>Capture the main charts, AQI indicator, and the layout of the pollutant cards.</i><br/>
-    <img src="docs/screenshots/result-desktop.png" alt="Result Dashboard Desktop" width="600" />
-    <img src="docs/screenshots/result-mobile.png" alt="Result Dashboard Mobile" width="200" />
-  </li>
-  <li>
-    <b>4. AI Analysis Section:</b><br/>
-    <i>Capture the Gemini-generated Executive Summary and pollutant insights.</i><br/>
-    <img src="docs/screenshots/ai-analysis.png" alt="AI Analysis Section" width="600" />
-  </li>
-  <li>
-    <b>5. PDF Report Sample:</b><br/>
-    <i>Upload a sample generated PDF, or a screenshot of the downloaded PDF highlighting the clear typography and layout.</i><br/>
-    <!-- <img src="docs/screenshots/pdf-sample.png" alt="PDF Report Sample" width="600" /> -->
-    <a href="docs/screenshots/sample-report.pdf">View Sample PDF Report</a>
-  </li>
-  <li>
-    <b>6. Email Subscription & Verification (To be added later):</b><br/>
-    <i>Space reserved for email verification and daily report email templates once hosting is complete.</i><br/>
-    <img src="docs/screenshots/email-template.png" alt="Email Template" width="600" />
-  </li>
-</ul>
+
+<h2>📸 Application Showcase</h2>
+
+<table border="0" cellpadding="10" cellspacing="0" width="100%">
+  <!-- ROW 1: Desktop Views -->
+  <tr>
+    <td width="50%" align="center">
+      <b>Agent Search (Desktop)</b><br/>
+      <a href="docs/screenshots/agent-search.png">
+        <img src="docs/screenshots/agent-search.png" alt="Agent Search Page" width="400" style="border-radius: 8px;" />
+      </a>
+    </td>
+    <td width="50%" align="center">
+      <b>Result Dashboard (Desktop)</b><br/>
+      <a href="docs/screenshots/result-desktop.png">
+        <img src="docs/screenshots/result-desktop.png" alt="Result Dashboard Desktop" width="400" style="border-radius: 8px;" />
+      </a>
+    </td>
+  </tr>
+  
+  <!-- ROW 2: Additional Desktop/Feature Views -->
+  <tr>
+    <td width="50%" align="center">
+      <b>AI Analysis Detail</b><br/>
+      <a href="docs/screenshots/ai-analysis.png">
+        <img src="docs/screenshots/ai-analysis.png" alt="AI Analysis Section" width="400" style="border-radius: 8px;" />
+      </a>
+    </td>
+    <td width="50%" align="center">
+      <b>Report Generation View</b><br/>
+      <a href="docs/screenshots/report-sample.png">
+        <img src="docs/screenshots/report-sample.png" alt="Report Sample" width="400" style="border-radius: 8px;" />
+      </a>
+    </td>
+  </tr>
+
+  <!-- ROW 3: Mobile Views -->
+  <tr>
+    <td width="50%" align="center">
+      <b>Global Pulse (Mobile)</b><br/>
+      <a href="docs/screenshots/landing-mobile.png">
+        <img src="docs/screenshots/landing-mobile.png" alt="Landing Page Mobile" width="200" style="border-radius: 8px;" />
+      </a>
+    </td>
+    <td width="50%" align="center">
+      <b>Result Dashboard (Mobile)</b><br/>
+      <a href="docs/screenshots/result-mobile.png">
+        <img src="docs/screenshots/result-mobile.png" alt="Result Dashboard Mobile" width="200" style="border-radius: 8px;" />
+      </a>
+    </td>
+  </tr>
+  <!-- ROW 4: Email Feature -->
+  <tr>
+    <td colspan="2" align="center">
+      <b>Daily Email Briefings (Resend)</b><br/>
+      <a href="docs/screenshots/email-template.png">
+        <img src="docs/screenshots/email-template.png" alt="Email Template" width="400" style="border-radius: 8px;" />
+      </a>
+    </td>
+  </tr>
+</table>
 
 <h2>👥 The Team</h2>
 <ul>
