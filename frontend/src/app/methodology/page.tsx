@@ -2,47 +2,9 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, Layers, Cpu, Database } from "lucide-react";
-import MermaidDiagram from "@/components/MermaidDiagram";
+import Image from "next/image";
 
 export default function MethodologyPage() {
-  const architectureChart = `
-graph TD
-    %% Core Architecture Diagram
-    classDef client fill:#0f172a,stroke:#38bdf8,stroke-width:1px,color:#f8fafc;
-    classDef theAPI fill:#0f172a,stroke:#818cf8,stroke-width:1px,color:#f8fafc;
-    classDef external fill:#0f172a,stroke:#fbbf24,stroke-width:1px,color:#f8fafc;
-    classDef db fill:#0f172a,stroke:#34d399,stroke-width:1px,color:#f8fafc;
-    
-    subgraph Frontend ["Next.js Client"]
-        UI["React UI"] --> Page["Interactive Visuals"]
-        UI --> API_Call["API Invocation"]
-    end
-    
-    subgraph Backend ["FastAPI Server"]
-        API_Call --> Router["Core Router"]
-        Router --> XGBoost["XGBoost Prediction Engine"]
-        Router --> GenAI["Gemini LLM Synthesis"]
-        Router --> PDFGen["PDF Report Engine"]
-    end
-    
-    subgraph Datasources ["External Data"]
-        XGBoost -.-> Model["Pre-trained Model Weights"]
-        GenAI --> Gemini["Google Gemini API"]
-        Router --> OpenAQ["OpenAQ Telemetry"]
-    end
-    
-    subgraph Persistence ["PostgreSQL Neon"]
-        Router --> DB[("Subscribers & History DB")]
-        DB --> Cron["Automated Node Cron Job"]
-        Cron --> Resend["Resend Email Gateway"]
-    end
-
-    class UI,Page,API_Call client;
-    class Router,XGBoost,GenAI,PDFGen theAPI;
-    class Model,Gemini,OpenAQ,Resend external;
-    class DB,Cron db;
-  `;
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-sky-500/30 p-8 pt-24">
       <div className="max-w-4xl mx-auto relative z-10">
@@ -79,7 +41,19 @@ graph TD
             </p>
           </div>
 
-          <MermaidDiagram chart={architectureChart} />
+          {/* Responsive SVG wrapper */}
+          <div className="relative w-full overflow-hidden p-4 rounded-xl border border-slate-800 bg-slate-900/30 backdrop-blur-sm">
+            <div className="w-full flex justify-center items-center">
+              <Image
+                src="/architecture.svg"
+                alt="AQILYTICS Architecture Flowchart"
+                width={800}
+                height={500}
+                className="w-full max-w-full h-auto object-contain rounded-md"
+                priority
+              />
+            </div>
+          </div>
         </section>
 
         <section className="mb-16">
@@ -138,7 +112,7 @@ graph TD
           <p>
             For more programmatic details, consult the{" "}
             <a
-              href="https://github.com/CaSh007s/aeronomy"
+              href="https://github.com/CaSh007s/aqilytics"
               target="_blank"
               className="text-sky-400 hover:text-sky-300 transition-colors"
             >

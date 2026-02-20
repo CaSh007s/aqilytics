@@ -84,7 +84,7 @@ export default function LandingPage() {
       {/* 5. The Dynamic Footer & CTA */}
       <motion.section
         style={{ opacity: footerOpacity, y: footerY }}
-        className="min-h-screen flex flex-col items-center justify-center relative z-10 bg-gradient-to-t from-black to-slate-950/0"
+        className="min-h-screen flex flex-col items-center justify-center relative z-10 bg-linear-to-t from-black to-slate-950/0"
       >
         {/* The Two Buttons */}
         <div className="flex flex-col md:flex-row gap-8 mb-24">
@@ -99,7 +99,7 @@ export default function LandingPage() {
           </Link>
 
           {/* GitHub Repository */}
-          <Link href="https://github.com/CaSh007s/aeronomy" target="_blank">
+          <Link href="https://github.com/CaSh007s/aqilytics" target="_blank">
             <button className="group relative w-64 h-16 rounded-full border border-slate-800 hover:border-slate-600 transition-all">
               <span className="text-lg text-slate-500 group-hover:text-slate-300 transition-colors flex items-center justify-center gap-2">
                 <Github className="w-5 h-5" /> GitHub Repository
@@ -121,7 +121,7 @@ export default function LandingPage() {
             </p>
             <div className="pt-4">
               <a
-                href="https://github.com/cash007s"
+                href="https://github.com/CaSh007s/aqilytics"
                 target="_blank"
                 className="inline-flex items-center gap-2 text-xs text-slate-600 hover:text-sky-400 transition-colors"
               >
@@ -140,7 +140,7 @@ export default function LandingPage() {
                 href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
                 target="_blank"
                 rel="noreferrer noopener"
-                className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
+                className="flex text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 items-center gap-2"
               >
                 <FileText className="w-3 h-3" /> WHO Air Quality Guidelines
               </a>
@@ -148,7 +148,7 @@ export default function LandingPage() {
                 href="https://www.who.int/tools/health-impact-assessment"
                 target="_blank"
                 rel="noreferrer noopener"
-                className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
+                className="flex text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 items-center gap-2"
               >
                 <FileText className="w-3 h-3" /> Health Impact Assessment
               </a>
@@ -156,7 +156,7 @@ export default function LandingPage() {
                 href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
                 target="_blank"
                 rel="noreferrer noopener"
-                className="block text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 flex items-center gap-2"
+                className="flex text-sm text-slate-400 hover:text-emerald-400 hover:translate-x-2 transition-all duration-300 items-center gap-2"
               >
                 <FileText className="w-3 h-3" /> Particulate Matter Risks
               </a>
