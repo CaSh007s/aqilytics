@@ -51,17 +51,17 @@ export default function InteractiveHeroTitle() {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-[120px]">
+    <div className="relative flex items-center justify-center min-h-30">
       {/* Container for Text and Bubble to manage layout alignment */}
       <motion.div
         layout
-        className="flex items-center gap-6"
+        className="flex flex-col md:flex-row items-center gap-6"
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
         {/* The Title Text */}
         <motion.h1
           layout="position"
-          className="text-6xl md:text-8xl tracking-[0.2em] font-thin uppercase text-slate-400 whitespace-nowrap z-20 cursor-default"
+          className="text-4xl sm:text-6xl md:text-8xl tracking-[0.2em] font-thin uppercase text-slate-400 whitespace-nowrap z-20 cursor-default"
         >
           AQILyticS
         </motion.h1>
@@ -72,7 +72,7 @@ export default function InteractiveHeroTitle() {
             layout
             onClick={handleOrbClick}
             className={`
-                relative cursor-pointer backdrop-blur-md overflow-hidden flex-shrink-0
+                relative cursor-pointer backdrop-blur-md overflow-hidden shrink-0
                 ${
                   isExpanded
                     ? "bg-slate-900/90 border border-slate-700 rounded-3xl"
@@ -81,7 +81,7 @@ export default function InteractiveHeroTitle() {
               `}
             initial={false}
             animate={{
-              width: isExpanded ? 320 : 64,
+              width: isExpanded ? "min(320px, 90vw)" : 64,
               height: isExpanded ? 140 : 64,
               // When collapsed: organic bubbling shape
               // When expanded: standard rounded rect
@@ -103,7 +103,7 @@ export default function InteractiveHeroTitle() {
             {/* Organic Motion for Bubble State (only when collapsed) */}
             {!isExpanded && (
               <motion.div
-                className="absolute inset-0 bg-gradient-to-tr from-sky-300 via-blue-500 to-indigo-500 opacity-90"
+                className="absolute inset-0 bg-linear-to-tr from-sky-300 via-blue-500 to-indigo-500 opacity-90"
                 animate={{
                   scale: [1, 1.15, 0.95, 1.1, 1],
                   rotate: [0, 90, 180, 270, 360],
@@ -154,7 +154,7 @@ export default function InteractiveHeroTitle() {
                       <div className="flex justify-between items-start mb-1">
                         <div>
                           <h3
-                            className="text-white font-medium text-lg leading-none truncate max-w-[200px]"
+                            className="text-white font-medium text-lg leading-none truncate max-w-50"
                             title={aqiData.city}
                           >
                             {aqiData.city}

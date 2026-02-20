@@ -105,7 +105,7 @@ export default function Navbar({
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-        className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md shadow-2xl shadow-sky-900/10 hover:shadow-sky-900/20 transition-all"
+        className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-slate-950/80 border border-white/10 backdrop-blur-md shadow-2xl shadow-sky-900/10 hover:shadow-sky-900/20 transition-all max-w-[95vw] md:max-w-none overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {/* Logo */}
         <motion.div
@@ -115,7 +115,7 @@ export default function Navbar({
             textShadow: "0 0 8px rgba(56,189,248,0.5)",
           }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 px-3 border-r border-white/10 pr-3 mr-1 cursor-pointer"
+          className="hidden md:flex items-center gap-2 px-3 border-r border-white/10 pr-3 mr-1 cursor-pointer shrink-0"
         >
           <span className="font-bold text-white tracking-[0.2em] text-xs transition-all">
             AQILYTICS
@@ -144,7 +144,7 @@ export default function Navbar({
                       ? "rgba(56, 189, 248, 0.15)"
                       : "transparent",
                   }}
-                  className={`relative group flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
+                  className={`relative shrink-0 group flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
                     isActive
                       ? "text-sky-400"
                       : "text-slate-400 hover:text-slate-200"
@@ -178,7 +178,7 @@ export default function Navbar({
             <motion.button
               onClick={onRiskClick}
               whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-rose-400 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full shrink-0 text-slate-400 hover:text-rose-400 transition-colors"
             >
               <AlertTriangle className="w-3.5 h-3.5" />
               <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
@@ -192,7 +192,7 @@ export default function Navbar({
                 backgroundColor: "rgba(255,255,255,0.05)",
                 color: "#fff",
               }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full shrink-0 text-slate-400 transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:inline">
@@ -207,7 +207,7 @@ export default function Navbar({
                 backgroundColor: "rgba(255,255,255,0.05)",
                 color: "#fff",
               }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-slate-400 hover:text-slate-300 transition-colors border-l border-white/10 ml-1 pl-4"
+              className="flex items-center gap-2 px-3 py-1.5 shrink-0 rounded-full text-slate-400 hover:text-slate-300 transition-colors border-l border-white/10 ml-1 pl-4"
               title="Exit Agent"
             >
               <LogOut className="w-3.5 h-3.5 rotate-180" />
@@ -224,7 +224,7 @@ export default function Navbar({
                 <Link key={item.href} href={item.href}>
                   <motion.div
                     whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    className={`flex items-center shrink-0 gap-2 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                       isActive
                         ? "text-sky-400 bg-sky-500/10"
                         : "text-slate-400 hover:text-slate-200"
@@ -243,7 +243,7 @@ export default function Navbar({
             <motion.button
               onClick={requestLocation}
               whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-              className="flex items-center gap-2 px-4 py-1.5 rounded-full text-slate-400 hover:text-sky-400 transition-colors border border-transparent hover:border-sky-500/20"
+              className="flex items-center shrink-0 gap-2 px-4 py-1.5 rounded-full text-slate-400 hover:text-sky-400 transition-colors border border-transparent hover:border-sky-500/20"
             >
               <MapPin className="w-3.5 h-3.5" />
               <span className="text-sm font-medium">Use My Location</span>
