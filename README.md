@@ -4,7 +4,7 @@
 
   <p>
     <!-- Add your hosted app link where the "#" is -->
-    <a href="#">
+    <a href="https://aqilytics.vercel.app/">
       <img src="https://img.shields.io/badge/Live_Project-View_App-00d2ff?style=for-the-badge&logoColor=white" alt="Live Demo" />
     </a>
   </p>
