@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       await client.query("COMMIT");
 
       // 3. Handle Verification Email
-      const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/verify?token=${subscriber.verification_token}`;
+      const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://aqilytics.vercel.app"}/api/verify?token=${subscriber.verification_token}`;
 
       // Only send verification if NOT verified
       if (!subscriber.is_verified) {
