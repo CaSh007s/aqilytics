@@ -27,8 +27,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "https://aqilytics.vercel.app",
-        "https://aqilytics.onrender.com"
+        "https://aqilytics.onrender.com",
+        "https://aqilytics-jr7j3m918-cash007s-projects.vercel.app"
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,4 +42,4 @@ app.include_router(aqi.router, prefix="/api/v1/aqi", tags=["aqi"])
 
 @app.get("/")
 def read_root():
-    return {"message": "Aeronomy API is running 🚀"}
+    return {"message": "AQILYTICS API is running 🚀"}

@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Aeronomy"
+    PROJECT_NAME: str = "AQILYTICS"
     API_V1_STR: str = "/api/v1"
     ENV_STATE: str = "dev"
     

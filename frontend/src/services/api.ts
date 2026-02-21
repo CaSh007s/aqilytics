@@ -1,5 +1,7 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const rawUrl = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+).replace(/\/+$/, "");
+const API_URL = rawUrl.endsWith("/api/v1") ? rawUrl : `${rawUrl}/api/v1`;
 
 export interface WeatherData {
   temp: number;
