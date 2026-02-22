@@ -112,7 +112,7 @@ export async function GET(request: Request) {
         const pdfBuffer = await generateReportPDF(cityReports);
 
         // Generate Unsubscribe Link
-        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/unsubscribe?token=${sub.verification_token}`;
+        const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://aqilytics.vercel.app"}/api/unsubscribe?token=${sub.verification_token}`;
 
         // Prepare Email Content
         // We'll list the cities in the email body

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
   if (!token) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/unsubscribe?error=missing_token`,
+      `${process.env.NEXT_PUBLIC_APP_URL || "https://aqilytics.vercel.app"}/unsubscribe?error=missing_token`,
     );
   }
 
@@ -25,17 +25,17 @@ export async function GET(request: Request) {
 
     if (result.rowCount === 0) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/unsubscribe?error=invalid_token`,
+        `${process.env.NEXT_PUBLIC_APP_URL || "https://aqilytics.vercel.app"}/unsubscribe?error=invalid_token`,
       );
     }
 
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/subscription/unsubscribed?email=${encodeURIComponent(result.rows[0].email)}`,
+      `${process.env.NEXT_PUBLIC_APP_URL || "https://aqilytics.vercel.app"}/subscription/unsubscribed?email=${encodeURIComponent(result.rows[0].email)}`,
     );
   } catch (error) {
     console.error("Unsubscribe error:", error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/subscription/unsubscribed?error=server_error`,
+      `${process.env.NEXT_PUBLIC_APP_URL || "https://aqilytics.vercel.app"}/subscription/unsubscribed?error=server_error`,
     );
   } finally {
     client.release();
