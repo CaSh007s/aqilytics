@@ -162,14 +162,33 @@
   </tr>
 </table>
 
-<h2>👥 The Team</h2>
-<ul>
-  <li><b>Kalash Pratap Gaur</b> (<a href="https://github.com/CaSh007s">@CaSh007s</a>) - Project Lead & Full Stack Developer</li>
-  <li><b>[Teammate Name 1]</b> - [Role]</li>
-  <li><b>[Teammate Name 2]</b> - [Role]</li>
-  <li><b>[Teammate Name 3]</b> - [Role]</li>
-  <!-- Add or remove teammates as necessary -->
-</ul>
+<h2>👥 Meet the Team</h2>
+<table border="1" cellpadding="10" cellspacing="0" width="100%">
+  <tr>
+    <th width="30%">Member & ID</th>
+    <th width="70%">Principal Contributions</th>
+  </tr>
+  <tr>
+    <td><b>Kalash (22BCE11617)</b></td>
+    <td><b>System Architect & Lead.</b> Orchestrated the entire full-stack ecosystem, including frontend, backend, AI integration, and the ML pipeline.</td>
+  </tr>
+  <tr>
+    <td><b>Aarav (22BCE10516)</b></td>
+    <td><b>ML Engineering.</b> Developed and optimized AQI forecasting models using intensive atmospheric data preprocessing and feature engineering.</td>
+  </tr>
+  <tr>
+    <td><b>Nitin (22BCE10930)</b></td>
+    <td><b>Frontend & UX.</b> Crafted the responsive and interactive UI/UX using React, Framer Motion, and Tailwind CSS for a premium feel.</td>
+  </tr>
+  <tr>
+    <td><b>Kavya (22BCE10255)</b></td>
+    <td><b>AI Workflows.</b> Designed and engineered advanced AI prompts and workflows to transform raw telemetry into actionable health insights.</td>
+  </tr>
+  <tr>
+    <td><b>Shivangi (22BCE10238)</b></td>
+    <td><b>Backend & Cloud.</b> Managed the database architecture, API engineering, deployment lifecycles, and automated delivery systems.</td>
+  </tr>
+</table>
 
 <hr />
 <p align="center">
