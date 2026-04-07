@@ -28,10 +28,8 @@
     </a>
   </p>
 
-  <p>
-    <a href="https://github.com/CaSh007s/aqilytics">View Repository on GitHub</a>
-  </p>
 
+  <br />
   <br />
   <!-- Hero Images at the top -->
   <a href="docs/screenshots/landing-desktop.png">
